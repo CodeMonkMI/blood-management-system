@@ -1,0 +1,1616 @@
+openapi: 3.0.0
+info:
+  title: Blood Management System
+  version: 1.0.0
+  description: >
+    The Blood Donation Management System backend is designed to provide REST APIs for blood donation activities including donor information management, blood request processing, and role-based access control. The system will support multiple microservices with appropriate authentication and authorization mechanisms.
+  contact:
+    email: mr.monirul.dev@gmail.com
+    name: Monirul Islam
+    url: http://github.com/codemonkmi
+
+servers:
+  - url: http://localhost:4000/api/v1
+    description: dev server
+tags:
+  - name: Auth
+  - name: Users
+  - name: Donation
+  - name: Notifications
+paths:
+  /auth/register:
+    post:
+      tags:
+        - Auth
+      description: Register new account
+      requestBody:
+        description: Account Data
+        content:
+          "application/json":
+            schema:
+              required:
+                - name
+                - photoUrls
+              type: object
+              properties:
+                fullname:
+                  type: string
+                  format: string
+                  example: John dog
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+                  example: securePassword123
+                blood:
+                  type: string
+                  enum:
+                    - A_POSITIVE
+                    - A_NEGATIVE
+                    - B_POSITIVE
+                    - B_NEGATIVE
+                    - AB_POSITIVE
+                    - AB_NEGATIVE
+                    - O_POSITIVE
+                    - O_NEGATIVE
+                phone:
+                  type: string
+                  example: "01900000000"
+      responses:
+        200:
+          description: Successful response
+          content:
+            "application/json":
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    format: boolean
+                    example: true
+                  message:
+                    type: string
+                    format: string
+                    example: User register successfully
+                  data:
+                    type: object
+                    properties:
+                      access_token:
+                        type: string
+                        format: string
+                        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.KMUFsIDTnFmyG3nMiGM6H9FNFUROf3wh7SmqJp-QV30
+        400:
+          $ref: "#/components/responses/400"
+        500:
+          $ref: "#/components/responses/500"
+  /auth/login:
+    post:
+      tags:
+        - Auth
+      description: Login existing account
+      requestBody:
+        description: Account Data
+        content:
+          "application/json":
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+                  example: securePassword123
+      responses:
+        200:
+          description: Successful response
+          content:
+            "application/json":
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    format: boolean
+                    example: true
+                  message:
+                    type: string
+                    format: string
+                    example: User register successfully
+                  data:
+                    type: object
+                    properties:
+                      access_token:
+                        type: string
+                        format: string
+                        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.KMUFsIDTnFmyG3nMiGM6H9FNFUROf3wh7SmqJp-QV30
+        400:
+          $ref: "#/components/responses/400"
+        500:
+          $ref: "#/components/responses/500"
+  /auth/me:
+    get:
+      tags:
+        - Auth
+      description: Authenticated User Data
+      responses:
+        200:
+          description: Successful response
+          content:
+            "application/json":
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    format: boolean
+                    example: true
+                  message:
+                    type: string
+                    format: string
+                    example: User register successfully
+                  data:
+                    $ref: "#/components/schemas/User"
+        401:
+          $ref: "#/components/responses/401"
+        500:
+          $ref: "#/components/responses/500"
+  /auth/authorize:
+    post:
+      tags:
+        - Auth
+      description: Authenticated User Data
+      requestBody:
+        content:
+          "application/json":
+            schema:
+              type: object
+              properties:
+                role:
+                  type: string
+                  enum:
+                    - super_admin
+                    - admin
+                    - user
+                  example: user
+                attribute:
+                  type: string
+                  format: string
+                  example: "user:get"
+                route:
+                  type: string
+                  format: url
+                  example: "/user"
+                method:
+                  type: string
+                  enum:
+                    - get
+                    - post
+                    - patch
+                    - delete
+      responses:
+        200:
+          description: Successful response
+          content:
+            "application/json":
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    format: boolean
+                    example: true
+                  message:
+                    type: string
+                    format: string
+                    example: User authorized
+
+        403:
+          $ref: "#/components/responses/403"
+        500:
+          $ref: "#/components/responses/500"
+
+  /users:
+    get:
+      tags:
+        - Users
+      description: Register new account
+      parameters:
+        - $ref: "#/components/parameters/pageParam"
+        - $ref: "#/components/parameters/limitParam"
+      responses:
+        200:
+          description: User retrieve
+          content:
+            "application/json":
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    format: boolean
+                    example: true
+                  message:
+                    type: string
+                    format: string
+                    example: User retrieve successfully
+                  data:
+                    type: array
+                    items:
+                      allOf:
+                        - $ref: "#/components/schemas/User"
+                        - type: object
+                          properties:
+                            link:
+                              type: string
+                              example: "/users/1"
+                  pagination:
+                    $ref: "#/components/schemas/PaginationMetadata"
+                  links:
+                    type: object
+                    properties:
+                      self:
+                        type: string
+                        format: url
+                        example: "/users"
+                      prev:
+                        type: string
+                        format: url
+                        example: "/user?page=1"
+                      next:
+                        type: string
+                        format: url
+                        example: "/user?page=3"
+
+        400:
+          $ref: "#/components/responses/400"
+        401:
+          $ref: "#/components/responses/401"
+        403:
+          $ref: "#/components/responses/403"
+        500:
+          $ref: "#/components/responses/500"
+    post:
+      tags:
+        - Users
+      description: Create new
+      requestBody:
+        description: Account Data
+        content:
+          "application/json":
+            schema:
+              required:
+                - name
+                - photoUrls
+              type: object
+              properties:
+                fullname:
+                  type: string
+                  format: string
+                  example: John dog
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+                  example: securePassword123
+                blood:
+                  type: string
+                  enum:
+                    - A_POSITIVE
+                    - A_NEGATIVE
+                    - B_POSITIVE
+                    - B_NEGATIVE
+                    - AB_POSITIVE
+                    - AB_NEGATIVE
+                    - O_POSITIVE
+                    - O_NEGATIVE
+                phone:
+                  type: string
+                  example: "01900000000"
+      responses:
+        200:
+          description: Successful response
+          content:
+            "application/json":
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    format: boolean
+                    example: true
+                  message:
+                    type: string
+                    format: string
+                    example: User register successfully
+                  data:
+                    allOf:
+                      - $ref: "#/components/schemas/User"
+                      - type: object
+                        properties:
+                          link:
+                            type: object
+                            example: "/users/1"
+                  links:
+                    type: object
+                    properties:
+                      self:
+                        type: string
+                        format: url
+                        example: "/users/1"
+
+        400:
+          $ref: "#/components/responses/400"
+        401:
+          $ref: "#/components/responses/401"
+        403:
+          $ref: "#/components/responses/403"
+        500:
+          $ref: "#/components/responses/500"
+  /users/{id}:
+    get:
+      tags:
+        - Users
+      description: Register new account
+      parameters:
+        - $ref: "#/components/parameters/idParam"
+        - $ref: "#/components/parameters/expandParam"
+      responses:
+        200:
+          description: Single User retrieve
+          content:
+            "application/json":
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    format: boolean
+                    example: true
+                  message:
+                    type: string
+                    format: string
+                    example: User retrieve successfully
+                  data:
+                    type: object
+                    allOf:
+                      - $ref: "#/components/schemas/User"
+                      - type: object
+                        properties:
+                          profile:
+                            $ref: "#/components/schemas/Profile"
+                  links:
+                    type: object
+                    properties:
+                      self:
+                        type: string
+                        format: url
+                        example: "/users/1"
+
+        400:
+          $ref: "#/components/responses/400"
+        401:
+          $ref: "#/components/responses/401"
+        403:
+          $ref: "#/components/responses/403"
+        500:
+          $ref: "#/components/responses/500"
+    patch:
+      tags:
+        - Users
+      description: Update Existing user
+      parameters:
+        - $ref: "#/components/parameters/idParam"
+      requestBody:
+        description: Account Data
+
+        content:
+          "application/json":
+            schema:
+              required:
+                - name
+                - photoUrls
+              type: object
+              properties:
+                fullname:
+                  type: string
+                  format: string
+                  example: John dog
+                email:
+                  type: string
+                  format: email
+                blood:
+                  type: string
+                  enum:
+                    - A_POSITIVE
+                    - A_NEGATIVE
+                    - B_POSITIVE
+                    - B_NEGATIVE
+                    - AB_POSITIVE
+                    - AB_NEGATIVE
+                    - O_POSITIVE
+                    - O_NEGATIVE
+                phone:
+                  type: string
+                  example: "01900000000"
+      responses:
+        200:
+          description: Successful response
+          content:
+            "application/json":
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    format: boolean
+                    example: true
+                  message:
+                    type: string
+                    format: string
+                    example: User updated successfully
+                  data:
+                    allOf:
+                      - $ref: "#/components/schemas/User"
+                      - type: object
+                        properties:
+                          link:
+                            type: object
+                            example: "/users/1"
+                  links:
+                    type: object
+                    properties:
+                      self:
+                        type: string
+                        format: url
+                        example: "/users/1"
+        400:
+          $ref: "#/components/responses/400"
+        401:
+          $ref: "#/components/responses/401"
+        403:
+          $ref: "#/components/responses/403"
+        500:
+          $ref: "#/components/responses/500"
+    delete:
+      tags:
+        - Users
+      description: Register new account
+      parameters:
+        - $ref: "#/components/parameters/idParam"
+
+      responses:
+        204:
+          description: Delete successful
+        400:
+          $ref: "#/components/responses/400"
+        401:
+          $ref: "#/components/responses/401"
+        403:
+          $ref: "#/components/responses/403"
+        500:
+          $ref: "#/components/responses/500"
+  /user/{id}/verify:
+    patch:
+      tags:
+        - Users
+      description: Update Existing user
+      parameters:
+        - $ref: "#/components/parameters/idParam"
+      responses:
+        200:
+          description: Successful response
+          content:
+            "application/json":
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    format: boolean
+                    example: true
+                  message:
+                    type: string
+                    format: string
+                    example: User verified successfully
+                  data:
+                    allOf:
+                      - $ref: "#/components/schemas/User"
+                      - type: object
+                        properties:
+                          link:
+                            type: object
+                            example: "/users/1"
+                  links:
+                    type: object
+                    properties:
+                      self:
+                        type: string
+                        format: url
+                        example: "/users/1"
+        400:
+          $ref: "#/components/responses/400"
+        401:
+          $ref: "#/components/responses/401"
+        403:
+          $ref: "#/components/responses/403"
+        404:
+          $ref: "#/components/responses/404"
+        500:
+          $ref: "#/components/responses/500"
+  /user/{id}/promote:
+    patch:
+      tags:
+        - Users
+      description: Update Existing user
+      parameters:
+        - $ref: "#/components/parameters/idParam"
+      responses:
+        200:
+          description: Successful response
+          content:
+            "application/json":
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    format: boolean
+                    example: true
+                  message:
+                    type: string
+                    format: string
+                    example: User promoted successfully
+                  data:
+                    allOf:
+                      - $ref: "#/components/schemas/User"
+                      - type: object
+                        properties:
+                          link:
+                            type: object
+                            example: "/users/1"
+                  links:
+                    type: object
+                    properties:
+                      self:
+                        type: string
+                        format: url
+                        example: "/users/1"
+        400:
+          $ref: "#/components/responses/400"
+        401:
+          $ref: "#/components/responses/401"
+        403:
+          $ref: "#/components/responses/403"
+        404:
+          $ref: "#/components/responses/404"
+        500:
+          $ref: "#/components/responses/500"
+  /user/{id}/demote:
+    patch:
+      tags:
+        - Users
+      description: Update Existing user
+      parameters:
+        - $ref: "#/components/parameters/idParam"
+      responses:
+        200:
+          description: Successful response
+          content:
+            "application/json":
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    format: boolean
+                    example: true
+                  message:
+                    type: string
+                    format: string
+                    example: User demoted successfully
+                  data:
+                    allOf:
+                      - $ref: "#/components/schemas/User"
+                      - type: object
+                        properties:
+                          link:
+                            type: object
+                            example: "/users/1"
+                  links:
+                    type: object
+                    properties:
+                      self:
+                        type: string
+                        format: url
+                        example: "/users/1"
+        400:
+          $ref: "#/components/responses/400"
+        401:
+          $ref: "#/components/responses/401"
+        403:
+          $ref: "#/components/responses/403"
+        404:
+          $ref: "#/components/responses/404"
+        500:
+          $ref: "#/components/responses/500"
+  /user/{id}/profile:
+    get:
+      tags:
+        - Users
+      description: Update Existing user
+      parameters:
+        - $ref: "#/components/parameters/idParam"
+      responses:
+        200:
+          description: Successful response
+          content:
+            "application/json":
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    format: boolean
+                    example: true
+                  message:
+                    type: string
+                    format: string
+                    example: User demoted successfully
+                  data:
+                    allOf:
+                      - $ref: "#/components/schemas/Profile"
+                  links:
+                    type: object
+                    properties:
+                      self:
+                        type: string
+                        format: url
+                        example: "/users/2/profile"
+        400:
+          $ref: "#/components/responses/400"
+        401:
+          $ref: "#/components/responses/401"
+        403:
+          $ref: "#/components/responses/403"
+        404:
+          $ref: "#/components/responses/404"
+        500:
+          $ref: "#/components/responses/500"
+    patch:
+      tags:
+        - Users
+      description: Update Profile data
+      requestBody:
+        description: Account Data
+        content:
+          "application/json":
+            schema:
+              required:
+                - name
+                - photoUrls
+              type: object
+              properties:
+                fullname:
+                  type: string
+                  example: John Doe
+                fatherName:
+                  type: string
+                  example: John Doe
+                motherName:
+                  type: string
+                  example: John Doe
+                address:
+                  type: string
+                  format: New Market
+                upzila:
+                  type: string
+                  example: Sador
+                zila:
+                  type: string
+                  example: Jashore
+
+      parameters:
+        - $ref: "#/components/parameters/idParam"
+      responses:
+        200:
+          description: Successful response
+          content:
+            "application/json":
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    format: boolean
+                    example: true
+                  message:
+                    type: string
+                    format: string
+                    example: User profile updated successfully
+                  data:
+                    allOf:
+                      - $ref: "#/components/schemas/Profile"
+
+                  links:
+                    type: object
+                    properties:
+                      self:
+                        type: string
+                        format: url
+                        example: "/users/2/profile"
+                      user:
+                        type: string
+                        format: url
+                        example: "/users/2"
+        400:
+          $ref: "#/components/responses/400"
+        401:
+          $ref: "#/components/responses/401"
+        403:
+          $ref: "#/components/responses/403"
+        404:
+          $ref: "#/components/responses/404"
+        500:
+          $ref: "#/components/responses/500"
+
+  /requests:
+    get:
+      tags:
+        - Donation
+      summary: Get All Requests
+      parameters:
+        - $ref: "#/components/parameters/pageParam"
+        - $ref: "#/components/parameters/limitParam"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      allOf:
+                        - $ref: "#/components/schemas/DonationRequested"
+                        - type: object
+                          properties:
+                            link:
+                              type: string
+                              example: "/request/2"
+
+                  pagination:
+                    $ref: "#/components/schemas/PaginationMetadata"
+                  link:
+                    type: object
+                    properties:
+                      self:
+                        type: string
+                        example: "/request"
+                400:
+          $ref: "#/components/responses/400"
+        401:
+          $ref: "#/components/responses/401"
+        403:
+          $ref: "#/components/responses/403"
+        404:
+          $ref: "#/components/responses/404"
+        500:
+          $ref: "#/components/responses/500"
+    post:
+      tags:
+        - Donation
+      summary: Submit Blood Request
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BloodRequestDTO"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        example: "req_001"
+                      status:
+                        $ref: "#/components/schemas/DonationStatus"
+                  link:
+                    type: object
+                    properties:
+                      self:
+                        type: string
+                        example: "/request"
+        400:
+          $ref: "#/components/responses/400"
+        500:
+          $ref: "#/components/responses/500"
+  /requests/{id}:
+    get:
+      tags:
+        - Donation
+      summary: Get Request
+      parameters:
+        - $ref: "#/components/parameters/idParam"
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                    example: "Request Successful"
+                  data:
+                    allOf:
+                      - $ref: "#/components/schemas/DonationRequested"
+                  link:
+                    type: object
+                    properties:
+                      self:
+                        type: string
+                        example: "/request/2"
+        400:
+          $ref: "#/components/responses/400"
+        401:
+          $ref: "#/components/responses/401"
+        403:
+          $ref: "#/components/responses/403"
+        404:
+          $ref: "#/components/responses/404"
+        500:
+          $ref: "#/components/responses/500"
+
+    patch:
+      tags:
+        - Donation
+      summary: Update Request
+      parameters:
+        - $ref: "#/components/parameters/idParam"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BloodRequestUpdateDTO"
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                    example: "Request updated Successful"
+                  data:
+                    allOf:
+                      - $ref: "#/components/schemas/DonationRequested"
+                  link:
+                    type: object
+                    properties:
+                      self:
+                        type: string
+                        example: "/request/2"
+        400:
+          $ref: "#/components/responses/400"
+        401:
+          $ref: "#/components/responses/401"
+        403:
+          $ref: "#/components/responses/403"
+        404:
+          $ref: "#/components/responses/404"
+        500:
+          $ref: "#/components/responses/500"
+  /requests/{id}/verify:
+    patch:
+      tags:
+        - Donation
+      summary: Verify Request
+      parameters:
+        - $ref: "#/components/parameters/idParam"
+      responses:
+        "200":
+          description: Success
+        400:
+          $ref: "#/components/responses/400"
+        401:
+          $ref: "#/components/responses/401"
+        403:
+          $ref: "#/components/responses/403"
+        404:
+          $ref: "#/components/responses/404"
+        500:
+          $ref: "#/components/responses/500"
+
+  /history:
+    get:
+      tags:
+        - Donation
+      summary: Get All History
+      parameters:
+        - $ref: "#/components/parameters/pageParam"
+        - $ref: "#/components/parameters/limitParam"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      allOf:
+                        - $ref: "#/components/schemas/DonationHistory"
+                        - type: object
+                          properties:
+                            link:
+                              type: string
+                              example: "/history/2"
+
+                  pagination:
+                    $ref: "#/components/schemas/PaginationMetadata"
+                  link:
+                    type: object
+                    properties:
+                      self:
+                        type: string
+                        example: "/history"
+                      prev:
+                        type: string
+                        example: "/history?page=1"
+                      next:
+                        type: string
+                        example: "/history?page=3"
+
+        400:
+          $ref: "#/components/responses/400"
+        401:
+          $ref: "#/components/responses/401"
+        403:
+          $ref: "#/components/responses/403"
+        404:
+          $ref: "#/components/responses/404"
+        500:
+          $ref: "#/components/responses/500"
+
+    post:
+      tags:
+        - Donation
+      summary: Create History
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HistoryBody"
+      responses:
+        201:
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: "#/components/schemas/DonationHistory"
+
+                  links:
+                    type: object
+                    properties:
+                      self:
+                        type: string
+                        format: url
+                        example: "/history/2"
+          400:
+          $ref: "#/components/responses/400"
+        401:
+          $ref: "#/components/responses/401"
+        403:
+          $ref: "#/components/responses/403"
+        404:
+          $ref: "#/components/responses/404"
+        500:
+          $ref: "#/components/responses/500"
+  /history/{id}:
+    get:
+      tags:
+        - Donation
+      summary: Get All History
+      parameters:
+        - $ref: "#/components/parameters/idParam"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: "#/components/schemas/DonationHistory"
+
+                  link:
+                    type: object
+                    properties:
+                      self:
+                        type: string
+                        example: "/history/2"
+
+        400:
+          $ref: "#/components/responses/400"
+        401:
+          $ref: "#/components/responses/401"
+        403:
+          $ref: "#/components/responses/403"
+        404:
+          $ref: "#/components/responses/404"
+        500:
+          $ref: "#/components/responses/500"
+    delete:
+      tags:
+        - Donation
+      summary: Delete History
+      parameters:
+        - $ref: "#/components/parameters/idParam"
+      responses:
+        "204":
+          description: No Content
+
+        400:
+          $ref: "#/components/responses/400"
+        401:
+          $ref: "#/components/responses/401"
+        403:
+          $ref: "#/components/responses/403"
+        404:
+          $ref: "#/components/responses/404"
+        500:
+          $ref: "#/components/responses/500"
+
+  /notifications/mail:
+    post:
+      summary: Send Mail Notification
+      description: Sends a mail notification to a user. Accessible only by admin users.
+      tags:
+        - Notifications
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MailNotificationDTO"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: "#/components/schemas/MailNotification"
+
+                  link:
+                    type: object
+                    properties:
+                      self:
+                        type: string
+                        example: "/history"
+
+        400:
+          $ref: "#/components/responses/400"
+        401:
+          $ref: "#/components/responses/401"
+        403:
+          $ref: "#/components/responses/403"
+        404:
+          $ref: "#/components/responses/404"
+        500:
+          $ref: "#/components/responses/500"
+
+components:
+  schemas:
+    AuthUser:
+      type: object
+      properties:
+        id:
+          $ref: "#/components/schemas/Id"
+        role:
+          type: object
+          properties:
+            name:
+              type: string
+              format: string
+              example: John Doe
+            role:
+              type: string
+              enum:
+                - super_admin
+                - admin
+                - user
+        email:
+          type: string
+          format: string
+        password:
+          type: string
+          format: string
+        lastDonation:
+          type: string
+          format: string
+          example: 3 Month Ago
+        status:
+          type: string
+          enum:
+            - progress
+            - verified
+            - hold
+            - suspended
+            - deleted
+
+    Id:
+      type: string
+      format: string
+      example: 2
+
+    BloodType:
+      type: string
+      enum:
+        - A_POSITIVE
+        - A_NEGATIVE
+        - B_POSITIVE
+        - B_NEGATIVE
+        - AB_POSITIVE
+        - AB_NEGATIVE
+        - O_POSITIVE
+        - O_NEGATIVE
+
+    Status:
+      type: string
+      enum:
+        - pending
+        - progress
+        - failed
+        - completed
+        - hold
+
+    Priority:
+      type: string
+      enum:
+        - low
+        - moderate
+        - high
+        - very_high
+
+    DonationStatus:
+      type: string
+      enum:
+        - request
+        - verified
+        - progress
+        - ready
+        - hold
+        - completed
+
+    Profile:
+      type: object
+      properties:
+        fullname:
+          type: string
+        fatherName:
+          type: string
+          nullable: true
+        motherName:
+          type: string
+          nullable: true
+        address:
+          type: string
+          nullable: true
+        upzila:
+          type: string
+          nullable: true
+        zila:
+          type: string
+          nullable: true
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          example: 1
+        email:
+          type: string
+          format: email
+        status:
+          $ref: "#/components/schemas/Status"
+        blood:
+          $ref: "#/components/schemas/BloodType"
+        phoneNo:
+          type: string
+          nullable: true
+        lastDonation:
+          type: string
+          format: date-time
+          nullable: true
+
+    DonationHistory:
+      type: object
+      properties:
+        id:
+          type: string
+        donor:
+          type: string
+          description: User ID of the donor
+        request:
+          type: string
+          description: User ID of the requester
+        status:
+          $ref: "#/components/schemas/DonationStatus"
+        message:
+          type: string
+
+    DonationRequested:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        phone:
+          type: string
+        address:
+          type: string
+        date:
+          type: string
+          format: date-time
+        blood:
+          $ref: "#/components/schemas/BloodType"
+        description:
+          type: string
+        status:
+          $ref: "#/components/schemas/DonationStatus"
+        metadata:
+          type: object
+        donor:
+          type: string
+        details:
+          type: string
+
+    Email:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        userId:
+          type: string
+        senderMail:
+          type: string
+        status:
+          $ref: "#/components/schemas/Status"
+        priority:
+          $ref: "#/components/schemas/Priority"
+
+    PaginationMetadata:
+      type: object
+      properties:
+        page:
+          type: integer
+          example: 2
+        limit:
+          type: integer
+          example: 10
+        totalItems:
+          type: integer
+          example: 100
+        totalPages:
+          type: integer
+          example: 10
+        next:
+          type: integer
+          nullable: true
+          example: 3
+        prev:
+          type: integer
+          nullable: true
+          example: 1
+
+    Timestamp:
+      type: object
+      properties:
+        created_at:
+          type: string
+          format: date-time
+          example: "2024-06-20T12:34:56Z"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2024-06-21T08:45:00Z"
+        deleted_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: null
+
+    BloodRequestDTO:
+      type: object
+      required:
+        - name
+        - phone
+        - address
+        - date
+        - blood
+        - description
+      properties:
+        name:
+          type: string
+          example: John Doe
+        phone:
+          type: string
+          example: "01234567890"
+        address:
+          type: string
+          example: Dhaka Bangladesh
+        date:
+          type: string
+          format: date-time
+        blood:
+          $ref: "#/components/schemas/BloodType"
+        description:
+          type: string
+          example: Need for pregnancy operations
+
+    BloodRequestUpdateDTO:
+      type: object
+      properties:
+        name:
+          type: string
+        phone:
+          type: string
+        address:
+          type: string
+        blood:
+          $ref: "#/components/schemas/BloodType"
+        date:
+          type: string
+          format: date-time
+        description:
+          type: string
+        status:
+          $ref: "#/components/schemas/DonationStatus"
+
+    HistoryBody:
+      type: object
+      required:
+        - donor
+        - request
+        - status
+        - message
+      properties:
+        donor:
+          type: string
+        request:
+          type: string
+        status:
+          $ref: "#/components/schemas/DonationStatus"
+        message:
+          $ref: "#/components/schemas/BloodType"
+
+    MailNotification:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        title:
+          type: string
+        message:
+          type: string
+        type:
+          type: string
+          enum: [BLOOD_REQUEST, ADMIN_MESSAGE]
+
+    MailNotificationDTO:
+      type: object
+      properties:
+        userId:
+          type: string
+          format: uuid
+        title:
+          type: string
+        message:
+          type: string
+        type:
+          type: string
+          enum: [BLOOD_REQUEST, ADMIN_MESSAGE]
+  parameters:
+    pageParam:
+      name: page
+      in: query
+      description: The page number to retrieve
+      required: false
+      schema:
+        type: integer
+        default: 2
+        minimum: 1
+
+    limitParam:
+      in: query
+      name: limit
+      description: Number of items per page
+      required: false
+      schema:
+        type: integer
+        default: 10
+        minimum: 1
+        maximum: 100
+    expandParam:
+      in: query
+      name: expand
+      description: Expand
+      required: false
+      schema:
+        type: string
+        enum:
+          - profile
+    idParam:
+      in: path
+      name: id
+      description: Resource Id
+      schema:
+        type: string
+        example: 2
+      required: true
+
+  responses:
+    400:
+      description: Bad request
+      content:
+        "application/json":
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                format: boolean
+                example: false
+              message:
+                type: string
+                format: string
+                example: "Bad request"
+              data:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    code:
+                      type: string
+                      format: string
+                      example: "too_small"
+                    pathname:
+                      type: array
+                      items:
+                        type: string
+                        format: string
+                        example: "id"
+                    message:
+                      type: string
+                      format: string
+                      example: "Invalid id"
+    401:
+      description: Unauthorized
+      content:
+        "application/json":
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                format: boolean
+                example: false
+              message:
+                type: string
+                format: string
+                example: "Unauthorized"
+    403:
+      description: Unauthorized
+      content:
+        "application/json":
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                format: boolean
+                example: false
+              message:
+                type: string
+                format: string
+                example: "You are not authorized to perform this actions"
+    404:
+      description: Not Found
+      content:
+        "application/json":
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                format: boolean
+                example: false
+              message:
+                type: string
+                format: string
+                example: "Your requested resource not found!"
+
+    500:
+      description: Internal Server Error
+      content:
+        "application/json":
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                format: boolean
+                example: false
+              message:
+                type: string
+                format: string
+                example: "We sorry for the inconvenience. We will fix this asap"
