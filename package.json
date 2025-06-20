@@ -1,5 +1,5 @@
 {
-  "name": "roktochai_micro",
+  "name": "blood-management-system",
   "private": true,
   "scripts": {
     "build": "turbo run build",
