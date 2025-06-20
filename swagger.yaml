@@ -1,68 +1,47 @@
-openapi: 3.0.0
+openapi: 3.0.3
 info:
   title: Blood Management System
   version: 1.0.0
-  description: >
-    The Blood Donation Management System backend is designed to provide REST APIs for blood donation activities including donor information management, blood request processing, and role-based access control. The system will support multiple microservices with appropriate authentication and authorization mechanisms.
+  description:
+    "The Blood Donation Management System backend is designed to provide
+    REST APIs for blood donation activities including donor information management,
+    blood request processing, and role-based access control. The system will support
+    multiple microservices with appropriate authentication and authorization mechanisms.
+    "
   contact:
     email: mr.monirul.dev@gmail.com
     name: Monirul Islam
     url: http://github.com/codemonkmi
-
 servers:
   - url: http://localhost:4000/api/v1
     description: dev server
 tags:
   - name: Auth
+    description: Operations related to Auth
   - name: Users
+    description: Operations related to Users
   - name: Donation
+    description: Operations related to Donation
   - name: Notifications
+    description: Operations related to Notifications
 paths:
   /auth/register:
     post:
       tags:
         - Auth
       description: Register new account
+      summary: Register new account
       requestBody:
-        description: Account Data
+        description: Register New account
         content:
-          "application/json":
+          application/json:
             schema:
-              required:
-                - name
-                - photoUrls
-              type: object
-              properties:
-                fullname:
-                  type: string
-                  format: string
-                  example: John dog
-                email:
-                  type: string
-                  format: email
-                password:
-                  type: string
-                  format: password
-                  example: securePassword123
-                blood:
-                  type: string
-                  enum:
-                    - A_POSITIVE
-                    - A_NEGATIVE
-                    - B_POSITIVE
-                    - B_NEGATIVE
-                    - AB_POSITIVE
-                    - AB_NEGATIVE
-                    - O_POSITIVE
-                    - O_NEGATIVE
-                phone:
-                  type: string
-                  example: "01900000000"
+              $ref: "#/components/schemas/RegisterDTO"
       responses:
-        200:
-          description: Successful response
+        201:
+          description: Created
           content:
-            "application/json":
+            application/json:
               schema:
                 type: object
                 properties:
@@ -81,20 +60,40 @@ paths:
                         type: string
                         format: string
                         example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.KMUFsIDTnFmyG3nMiGM6H9FNFUROf3wh7SmqJp-QV30
+                  links:
+                    type: object
+                    properties:
+                      self:
+                        type: string
+                        format: url
+                        example: /auth/login
+                      me:
+                        type: string
+                        format: url
+                        example: /auth/me
+                      request:
+                        type: string
+                        format: url
+                        example: /request
         400:
           $ref: "#/components/responses/400"
         500:
           $ref: "#/components/responses/500"
+
   /auth/login:
     post:
       tags:
         - Auth
       description: Login existing account
+      summary: Login to account
       requestBody:
-        description: Account Data
+        description: Login credentials
         content:
-          "application/json":
+          application/json:
             schema:
+              required:
+                - email
+                - password
               type: object
               properties:
                 email:
@@ -106,9 +105,9 @@ paths:
                   example: securePassword123
       responses:
         200:
-          description: Successful response
+          description: Successful
           content:
-            "application/json":
+            application/json:
               schema:
                 type: object
                 properties:
@@ -127,21 +126,47 @@ paths:
                         type: string
                         format: string
                         example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.KMUFsIDTnFmyG3nMiGM6H9FNFUROf3wh7SmqJp-QV30
+                  links:
+                    type: object
+                    properties:
+                      self:
+                        type: string
+                        format: url
+                        example: /auth/login
+                      me:
+                        type: string
+                        format: url
+                        example: /auth/me
+                      request:
+                        type: string
+                        format: url
+                        example: /request
         400:
           $ref: "#/components/responses/400"
         500:
           $ref: "#/components/responses/500"
+
   /auth/me:
     get:
+      security:
+        - BearerAuth: []
       tags:
         - Auth
       description: Authenticated User Data
+      summary: Retrieve authenticated user data
+      parameters:
+        - $ref: "#/components/parameters/expandParam"
       responses:
         200:
           description: Successful response
           content:
-            "application/json":
+            application/json:
               schema:
+                required:
+                  - success
+                  - message
+                  - data
+                  - links
                 type: object
                 properties:
                   success:
@@ -153,19 +178,33 @@ paths:
                     format: string
                     example: User register successfully
                   data:
-                    $ref: "#/components/schemas/User"
+                    allOf:
+                      - $ref: "#/components/schemas/User"
+                      - $ref: "#/components/schemas/Timestamp"
+
+                  links:
+                    type: object
+                    properties:
+                      self:
+                        type: string
+                        format: url
+                        example: /auth/me
         401:
           $ref: "#/components/responses/401"
         500:
           $ref: "#/components/responses/500"
+
   /auth/authorize:
     post:
+      security:
+        - BearerAuth: []
       tags:
         - Auth
-      description: Authenticated User Data
+      description: Authorize user to perform actions via Permission Manager
+      summary: Authorize user to perform actions
       requestBody:
         content:
-          "application/json":
+          application/json:
             schema:
               type: object
               properties:
@@ -179,11 +218,11 @@ paths:
                 attribute:
                   type: string
                   format: string
-                  example: "user:get"
+                  example: user:get
                 route:
                   type: string
                   format: url
-                  example: "/user"
+                  example: /user
                 method:
                   type: string
                   enum:
@@ -195,7 +234,7 @@ paths:
         200:
           description: Successful response
           content:
-            "application/json":
+            application/json:
               schema:
                 type: object
                 properties:
@@ -207,7 +246,6 @@ paths:
                     type: string
                     format: string
                     example: User authorized
-
         403:
           $ref: "#/components/responses/403"
         500:
@@ -215,9 +253,12 @@ paths:
 
   /users:
     get:
+      security:
+        - BearerAuth: []
       tags:
         - Users
-      description: Register new account
+      description: Retrieve all users with pagination data
+      summary: Retrieve Users
       parameters:
         - $ref: "#/components/parameters/pageParam"
         - $ref: "#/components/parameters/limitParam"
@@ -225,7 +266,7 @@ paths:
         200:
           description: User retrieve
           content:
-            "application/json":
+            application/json:
               schema:
                 type: object
                 properties:
@@ -242,11 +283,12 @@ paths:
                     items:
                       allOf:
                         - $ref: "#/components/schemas/User"
+                        - $ref: "#/components/schemas/Timestamp"
                         - type: object
                           properties:
                             link:
                               type: string
-                              example: "/users/1"
+                              example: /users/1
                   pagination:
                     $ref: "#/components/schemas/PaginationMetadata"
                   links:
@@ -255,16 +297,15 @@ paths:
                       self:
                         type: string
                         format: url
-                        example: "/users"
+                        example: /users
                       prev:
                         type: string
                         format: url
-                        example: "/user?page=1"
+                        example: /user?page=1
                       next:
                         type: string
                         format: url
-                        example: "/user?page=3"
-
+                        example: /user?page=3
         400:
           $ref: "#/components/responses/400"
         401:
@@ -273,14 +314,18 @@ paths:
           $ref: "#/components/responses/403"
         500:
           $ref: "#/components/responses/500"
+
     post:
+      security:
+        - BearerAuth: []
       tags:
         - Users
-      description: Create new
+      description: Create new users
+      summary: Create new user
       requestBody:
         description: Account Data
         content:
-          "application/json":
+          application/json:
             schema:
               required:
                 - name
@@ -311,12 +356,12 @@ paths:
                     - O_NEGATIVE
                 phone:
                   type: string
-                  example: "01900000000"
+                  example: 01900000000
       responses:
-        200:
-          description: Successful response
+        201:
+          description: Created
           content:
-            "application/json":
+            application/json:
               schema:
                 type: object
                 properties:
@@ -331,19 +376,19 @@ paths:
                   data:
                     allOf:
                       - $ref: "#/components/schemas/User"
+                      - $ref: "#/components/schemas/Timestamp"
                       - type: object
                         properties:
                           link:
                             type: object
-                            example: "/users/1"
+                            example: /users/1
                   links:
                     type: object
                     properties:
                       self:
                         type: string
                         format: url
-                        example: "/users/1"
-
+                        example: /users/1
         400:
           $ref: "#/components/responses/400"
         401:
@@ -352,11 +397,15 @@ paths:
           $ref: "#/components/responses/403"
         500:
           $ref: "#/components/responses/500"
+
   /users/{id}:
     get:
+      security:
+        - BearerAuth: []
       tags:
         - Users
-      description: Register new account
+      description: Retrieve single user with a a user id
+      summary: Retrieve a single user
       parameters:
         - $ref: "#/components/parameters/idParam"
         - $ref: "#/components/parameters/expandParam"
@@ -364,7 +413,7 @@ paths:
         200:
           description: Single User retrieve
           content:
-            "application/json":
+            application/json:
               schema:
                 type: object
                 properties:
@@ -380,18 +429,20 @@ paths:
                     type: object
                     allOf:
                       - $ref: "#/components/schemas/User"
+                      - $ref: "#/components/schemas/Timestamp"
                       - type: object
                         properties:
                           profile:
-                            $ref: "#/components/schemas/Profile"
+                            allOf:
+                              - $ref: "#/components/schemas/Profile"
+                              - $ref: "#/components/schemas/Timestamp"
                   links:
                     type: object
                     properties:
                       self:
                         type: string
                         format: url
-                        example: "/users/1"
-
+                        example: /users/1
         400:
           $ref: "#/components/responses/400"
         401:
@@ -400,21 +451,21 @@ paths:
           $ref: "#/components/responses/403"
         500:
           $ref: "#/components/responses/500"
+
     patch:
+      security:
+        - BearerAuth: []
       tags:
         - Users
       description: Update Existing user
+      summary: Update  user
       parameters:
         - $ref: "#/components/parameters/idParam"
       requestBody:
         description: Account Data
-
         content:
-          "application/json":
+          application/json:
             schema:
-              required:
-                - name
-                - photoUrls
               type: object
               properties:
                 fullname:
@@ -437,12 +488,12 @@ paths:
                     - O_NEGATIVE
                 phone:
                   type: string
-                  example: "01900000000"
+                  example: 01900000000
       responses:
         200:
           description: Successful response
           content:
-            "application/json":
+            application/json:
               schema:
                 type: object
                 properties:
@@ -457,18 +508,19 @@ paths:
                   data:
                     allOf:
                       - $ref: "#/components/schemas/User"
+                      - $ref: "#/components/schemas/Timestamp"
                       - type: object
                         properties:
                           link:
                             type: object
-                            example: "/users/1"
+                            example: /users/1
                   links:
                     type: object
                     properties:
                       self:
                         type: string
                         format: url
-                        example: "/users/1"
+                        example: /users/1
         400:
           $ref: "#/components/responses/400"
         401:
@@ -477,13 +529,16 @@ paths:
           $ref: "#/components/responses/403"
         500:
           $ref: "#/components/responses/500"
+
     delete:
+      security:
+        - BearerAuth: []
       tags:
         - Users
-      description: Register new account
+      description: Update User with give user id
+      summary: Update User
       parameters:
         - $ref: "#/components/parameters/idParam"
-
       responses:
         204:
           description: Delete successful
@@ -495,18 +550,22 @@ paths:
           $ref: "#/components/responses/403"
         500:
           $ref: "#/components/responses/500"
+
   /user/{id}/verify:
     patch:
+      security:
+        - BearerAuth: []
       tags:
         - Users
-      description: Update Existing user
+      description: Verify newly registered user
+      summary: Verify user
       parameters:
         - $ref: "#/components/parameters/idParam"
       responses:
         200:
           description: Successful response
           content:
-            "application/json":
+            application/json:
               schema:
                 type: object
                 properties:
@@ -521,18 +580,19 @@ paths:
                   data:
                     allOf:
                       - $ref: "#/components/schemas/User"
+                      - $ref: "#/components/schemas/Timestamp"
                       - type: object
                         properties:
                           link:
                             type: object
-                            example: "/users/1"
+                            example: /users/1
                   links:
                     type: object
                     properties:
                       self:
                         type: string
                         format: url
-                        example: "/users/1"
+                        example: /users/1
         400:
           $ref: "#/components/responses/400"
         401:
@@ -543,18 +603,22 @@ paths:
           $ref: "#/components/responses/404"
         500:
           $ref: "#/components/responses/500"
+
   /user/{id}/promote:
     patch:
+      security:
+        - BearerAuth: []
       tags:
         - Users
-      description: Update Existing user
+      description: Promote user
+      summary: Promote user
       parameters:
         - $ref: "#/components/parameters/idParam"
       responses:
         200:
           description: Successful response
           content:
-            "application/json":
+            application/json:
               schema:
                 type: object
                 properties:
@@ -569,18 +633,19 @@ paths:
                   data:
                     allOf:
                       - $ref: "#/components/schemas/User"
+                      - $ref: "#/components/schemas/Timestamp"
                       - type: object
                         properties:
                           link:
                             type: object
-                            example: "/users/1"
+                            example: /users/1
                   links:
                     type: object
                     properties:
                       self:
                         type: string
                         format: url
-                        example: "/users/1"
+                        example: /users/1
         400:
           $ref: "#/components/responses/400"
         401:
@@ -591,18 +656,22 @@ paths:
           $ref: "#/components/responses/404"
         500:
           $ref: "#/components/responses/500"
+
   /user/{id}/demote:
     patch:
+      security:
+        - BearerAuth: []
       tags:
         - Users
-      description: Update Existing user
+      description: Demote user
+      summary: Demote user
       parameters:
         - $ref: "#/components/parameters/idParam"
       responses:
         200:
           description: Successful response
           content:
-            "application/json":
+            application/json:
               schema:
                 type: object
                 properties:
@@ -617,18 +686,19 @@ paths:
                   data:
                     allOf:
                       - $ref: "#/components/schemas/User"
+                      - $ref: "#/components/schemas/Timestamp"
                       - type: object
                         properties:
                           link:
                             type: object
-                            example: "/users/1"
+                            example: /users/1
                   links:
                     type: object
                     properties:
                       self:
                         type: string
                         format: url
-                        example: "/users/1"
+                        example: /users/1
         400:
           $ref: "#/components/responses/400"
         401:
@@ -639,18 +709,22 @@ paths:
           $ref: "#/components/responses/404"
         500:
           $ref: "#/components/responses/500"
+
   /user/{id}/profile:
     get:
+      security:
+        - BearerAuth: []
       tags:
         - Users
-      description: Update Existing user
+      description: Get user profile
+      summary: User profile
       parameters:
         - $ref: "#/components/parameters/idParam"
       responses:
         200:
           description: Successful response
           content:
-            "application/json":
+            application/json:
               schema:
                 type: object
                 properties:
@@ -665,13 +739,14 @@ paths:
                   data:
                     allOf:
                       - $ref: "#/components/schemas/Profile"
+                      - $ref: "#/components/schemas/Timestamp"
                   links:
                     type: object
                     properties:
                       self:
                         type: string
                         format: url
-                        example: "/users/2/profile"
+                        example: /users/2/profile
         400:
           $ref: "#/components/responses/400"
         401:
@@ -682,14 +757,18 @@ paths:
           $ref: "#/components/responses/404"
         500:
           $ref: "#/components/responses/500"
+
     patch:
+      security:
+        - BearerAuth: []
       tags:
         - Users
       description: Update Profile data
+      summary: Update Profile
       requestBody:
         description: Account Data
         content:
-          "application/json":
+          application/json:
             schema:
               required:
                 - name
@@ -714,14 +793,13 @@ paths:
                 zila:
                   type: string
                   example: Jashore
-
       parameters:
         - $ref: "#/components/parameters/idParam"
       responses:
         200:
           description: Successful response
           content:
-            "application/json":
+            application/json:
               schema:
                 type: object
                 properties:
@@ -736,18 +814,18 @@ paths:
                   data:
                     allOf:
                       - $ref: "#/components/schemas/Profile"
-
+                      - $ref: "#/components/schemas/Timestamp"
                   links:
                     type: object
                     properties:
                       self:
                         type: string
                         format: url
-                        example: "/users/2/profile"
+                        example: /users/2/profile
                       user:
                         type: string
                         format: url
-                        example: "/users/2"
+                        example: /users/2
         400:
           $ref: "#/components/responses/400"
         401:
@@ -761,6 +839,8 @@ paths:
 
   /requests:
     get:
+      security:
+        - BearerAuth: []
       tags:
         - Donation
       summary: Get All Requests
@@ -768,7 +848,7 @@ paths:
         - $ref: "#/components/parameters/pageParam"
         - $ref: "#/components/parameters/limitParam"
       responses:
-        "200":
+        200:
           description: Success
           content:
             application/json:
@@ -784,12 +864,12 @@ paths:
                     items:
                       allOf:
                         - $ref: "#/components/schemas/DonationRequested"
+                        - $ref: "#/components/schemas/Timestamp"
                         - type: object
                           properties:
                             link:
                               type: string
-                              example: "/request/2"
-
+                              example: /request/2
                   pagination:
                     $ref: "#/components/schemas/PaginationMetadata"
                   link:
@@ -797,8 +877,8 @@ paths:
                     properties:
                       self:
                         type: string
-                        example: "/request"
-                400:
+                        example: /request
+        400:
           $ref: "#/components/responses/400"
         401:
           $ref: "#/components/responses/401"
@@ -808,6 +888,8 @@ paths:
           $ref: "#/components/responses/404"
         500:
           $ref: "#/components/responses/500"
+      description: Performs GET operation on /requests
+
     post:
       tags:
         - Donation
@@ -819,8 +901,8 @@ paths:
             schema:
               $ref: "#/components/schemas/BloodRequestDTO"
       responses:
-        "200":
-          description: Success
+        201:
+          description: Created
           content:
             application/json:
               schema:
@@ -831,25 +913,31 @@ paths:
                   message:
                     type: string
                   data:
-                    type: object
-                    properties:
-                      id:
-                        type: string
-                        example: "req_001"
-                      status:
-                        $ref: "#/components/schemas/DonationStatus"
+                    allOf:
+                      - type: object
+                        properties:
+                          id:
+                            type: string
+                            example: req_001
+                          status:
+                            $ref: "#/components/schemas/DonationStatus"
+                      - $ref: "#/components/schemas/Timestamp"
                   link:
                     type: object
                     properties:
                       self:
                         type: string
-                        example: "/request"
+                        example: /request
         400:
           $ref: "#/components/responses/400"
         500:
           $ref: "#/components/responses/500"
+      description: Performs POST operation on /requests
+
   /requests/{id}:
     get:
+      security:
+        - BearerAuth: []
       tags:
         - Donation
       summary: Get Request
@@ -867,16 +955,17 @@ paths:
                     type: boolean
                   message:
                     type: string
-                    example: "Request Successful"
+                    example: Request Successful
                   data:
                     allOf:
                       - $ref: "#/components/schemas/DonationRequested"
+                      - $ref: "#/components/schemas/Timestamp"
                   link:
                     type: object
                     properties:
                       self:
                         type: string
-                        example: "/request/2"
+                        example: /request/2
         400:
           $ref: "#/components/responses/400"
         401:
@@ -887,8 +976,11 @@ paths:
           $ref: "#/components/responses/404"
         500:
           $ref: "#/components/responses/500"
+      description: Performs GET operation on /requests/{id}
 
     patch:
+      security:
+        - BearerAuth: []
       tags:
         - Donation
       summary: Update Request
@@ -911,16 +1003,17 @@ paths:
                     type: boolean
                   message:
                     type: string
-                    example: "Request updated Successful"
+                    example: Request updated Successful
                   data:
                     allOf:
                       - $ref: "#/components/schemas/DonationRequested"
+                      - $ref: "#/components/schemas/Timestamp"
                   link:
                     type: object
                     properties:
                       self:
                         type: string
-                        example: "/request/2"
+                        example: /request/2
         400:
           $ref: "#/components/responses/400"
         401:
@@ -931,15 +1024,19 @@ paths:
           $ref: "#/components/responses/404"
         500:
           $ref: "#/components/responses/500"
+      description: Performs PATCH operation on /requests/{id}
+
   /requests/{id}/verify:
     patch:
+      security:
+        - BearerAuth: []
       tags:
         - Donation
       summary: Verify Request
       parameters:
         - $ref: "#/components/parameters/idParam"
       responses:
-        "200":
+        200:
           description: Success
         400:
           $ref: "#/components/responses/400"
@@ -951,9 +1048,12 @@ paths:
           $ref: "#/components/responses/404"
         500:
           $ref: "#/components/responses/500"
+      description: Performs PATCH operation on /requests/{id}/verify
 
   /history:
     get:
+      security:
+        - BearerAuth: []
       tags:
         - Donation
       summary: Get All History
@@ -961,7 +1061,7 @@ paths:
         - $ref: "#/components/parameters/pageParam"
         - $ref: "#/components/parameters/limitParam"
       responses:
-        "200":
+        200:
           description: Success
           content:
             application/json:
@@ -977,12 +1077,12 @@ paths:
                     items:
                       allOf:
                         - $ref: "#/components/schemas/DonationHistory"
+                        - $ref: "#/components/schemas/Timestamp"
                         - type: object
                           properties:
                             link:
                               type: string
-                              example: "/history/2"
-
+                              example: /history/2
                   pagination:
                     $ref: "#/components/schemas/PaginationMetadata"
                   link:
@@ -990,14 +1090,13 @@ paths:
                     properties:
                       self:
                         type: string
-                        example: "/history"
+                        example: /history
                       prev:
                         type: string
-                        example: "/history?page=1"
+                        example: /history?page=1
                       next:
                         type: string
-                        example: "/history?page=3"
-
+                        example: /history?page=3
         400:
           $ref: "#/components/responses/400"
         401:
@@ -1008,8 +1107,11 @@ paths:
           $ref: "#/components/responses/404"
         500:
           $ref: "#/components/responses/500"
+      description: Performs GET operation on /history
 
     post:
+      security:
+        - BearerAuth: []
       tags:
         - Donation
       summary: Create History
@@ -1018,7 +1120,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/HistoryBody"
+              $ref: "#/components/schemas/HistoryCreateDTO"
       responses:
         201:
           description: Created
@@ -1032,16 +1134,17 @@ paths:
                   message:
                     type: string
                   data:
-                    $ref: "#/components/schemas/DonationHistory"
-
+                    allOf:
+                      - $ref: "#/components/schemas/DonationHistory"
+                      - $ref: "#/components/schemas/Timestamp"
                   links:
                     type: object
                     properties:
                       self:
                         type: string
                         format: url
-                        example: "/history/2"
-          400:
+                        example: /history/2
+        400:
           $ref: "#/components/responses/400"
         401:
           $ref: "#/components/responses/401"
@@ -1051,15 +1154,19 @@ paths:
           $ref: "#/components/responses/404"
         500:
           $ref: "#/components/responses/500"
+      description: Performs POST operation on /history
+
   /history/{id}:
     get:
+      security:
+        - BearerAuth: []
       tags:
         - Donation
       summary: Get All History
       parameters:
         - $ref: "#/components/parameters/idParam"
       responses:
-        "200":
+        200:
           description: Success
           content:
             application/json:
@@ -1071,15 +1178,15 @@ paths:
                   message:
                     type: string
                   data:
-                    $ref: "#/components/schemas/DonationHistory"
-
+                    allOf:
+                      - $ref: "#/components/schemas/DonationHistory"
+                      - $ref: "#/components/schemas/Timestamp"
                   link:
                     type: object
                     properties:
                       self:
                         type: string
-                        example: "/history/2"
-
+                        example: /history/2
         400:
           $ref: "#/components/responses/400"
         401:
@@ -1090,7 +1197,11 @@ paths:
           $ref: "#/components/responses/404"
         500:
           $ref: "#/components/responses/500"
+      description: Performs GET operation on /history/{id}
+
     delete:
+      security:
+        - BearerAuth: []
       tags:
         - Donation
       summary: Delete History
@@ -1099,7 +1210,6 @@ paths:
       responses:
         "204":
           description: No Content
-
         400:
           $ref: "#/components/responses/400"
         401:
@@ -1110,15 +1220,17 @@ paths:
           $ref: "#/components/responses/404"
         500:
           $ref: "#/components/responses/500"
+      description: Performs DELETE operation on /history/{id}
 
   /notifications/mail:
     post:
+      security:
+        - BearerAuth: []
       summary: Send Mail Notification
       description: Sends a mail notification to a user. Accessible only by admin users.
       tags:
         - Notifications
-      security:
-        - bearerAuth: []
+
       requestBody:
         required: true
         content:
@@ -1126,7 +1238,7 @@ paths:
             schema:
               $ref: "#/components/schemas/MailNotificationDTO"
       responses:
-        "200":
+        200:
           description: Success
           content:
             application/json:
@@ -1139,14 +1251,12 @@ paths:
                     type: string
                   data:
                     $ref: "#/components/schemas/MailNotification"
-
                   link:
                     type: object
                     properties:
                       self:
                         type: string
-                        example: "/history"
-
+                        example: /history
         400:
           $ref: "#/components/responses/400"
         401:
@@ -1157,51 +1267,13 @@ paths:
           $ref: "#/components/responses/404"
         500:
           $ref: "#/components/responses/500"
-
 components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
   schemas:
-    AuthUser:
-      type: object
-      properties:
-        id:
-          $ref: "#/components/schemas/Id"
-        role:
-          type: object
-          properties:
-            name:
-              type: string
-              format: string
-              example: John Doe
-            role:
-              type: string
-              enum:
-                - super_admin
-                - admin
-                - user
-        email:
-          type: string
-          format: string
-        password:
-          type: string
-          format: string
-        lastDonation:
-          type: string
-          format: string
-          example: 3 Month Ago
-        status:
-          type: string
-          enum:
-            - progress
-            - verified
-            - hold
-            - suspended
-            - deleted
-
-    Id:
-      type: string
-      format: string
-      example: 2
-
     BloodType:
       type: string
       enum:
@@ -1213,23 +1285,79 @@ components:
         - AB_NEGATIVE
         - O_POSITIVE
         - O_NEGATIVE
+    DonationHistory:
+      type: object
+      properties:
+        id:
+          type: string
+          example: 2
+        donor:
+          type: string
+          description: User ID of the donor
+          example: 1
+        request:
+          type: string
+          description: User ID of the requester
+          example: 2
+        status:
+          $ref: "#/components/schemas/DonationStatus"
+        message:
+          type: string
+          example: Status updated to progress
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - donor
+        - request
+        - status
+        - message
+    DonationRequested:
+      type: object
+      properties:
+        id:
+          type: string
+          example: 2
+        name:
+          type: string
+          example: Monirul Islam
+        phone:
+          type: string
+          example: "01234567890"
+        address:
+          type: string
+          example: Dhaka, Bangladesh
+        date:
+          type: string
+          format: date-time
+        blood:
+          $ref: "#/components/schemas/BloodType"
+        description:
+          type: string
+          example: "Blood tech is a general term that can refer to several different, but related, professions in the healthcare field"
+        status:
+          $ref: "#/components/schemas/DonationStatus"
+        metadata:
+          type: object
+        donor:
+          type: string
+          example: 1
+        details:
+          type: string
+          example: "Blood tech is a general term that can refer to several different, but related, professions in the healthcare field."
 
-    Status:
-      type: string
-      enum:
-        - pending
-        - progress
-        - failed
-        - completed
-        - hold
-
-    Priority:
-      type: string
-      enum:
-        - low
-        - moderate
-        - high
-        - very_high
+      required:
+        - id
+        - name
+        - phone
+        - address
+        - date
+        - blood
+        - status
 
     DonationStatus:
       type: string
@@ -1241,109 +1369,68 @@ components:
         - hold
         - completed
 
-    Profile:
-      type: object
-      properties:
-        fullname:
-          type: string
-        fatherName:
-          type: string
-          nullable: true
-        motherName:
-          type: string
-          nullable: true
-        address:
-          type: string
-          nullable: true
-        upzila:
-          type: string
-          nullable: true
-        zila:
-          type: string
-          nullable: true
-
-    User:
-      type: object
-      properties:
-        id:
-          type: string
-          example: 1
-        email:
-          type: string
-          format: email
-        status:
-          $ref: "#/components/schemas/Status"
-        blood:
-          $ref: "#/components/schemas/BloodType"
-        phoneNo:
-          type: string
-          nullable: true
-        lastDonation:
-          type: string
-          format: date-time
-          nullable: true
-
-    DonationHistory:
-      type: object
-      properties:
-        id:
-          type: string
-        donor:
-          type: string
-          description: User ID of the donor
-        request:
-          type: string
-          description: User ID of the requester
-        status:
-          $ref: "#/components/schemas/DonationStatus"
-        message:
-          type: string
-
-    DonationRequested:
-      type: object
-      properties:
-        id:
-          type: string
-        name:
-          type: string
-        phone:
-          type: string
-        address:
-          type: string
-        date:
-          type: string
-          format: date-time
-        blood:
-          $ref: "#/components/schemas/BloodType"
-        description:
-          type: string
-        status:
-          $ref: "#/components/schemas/DonationStatus"
-        metadata:
-          type: object
-        donor:
-          type: string
-        details:
-          type: string
-
     Email:
       type: object
       properties:
         id:
           type: string
+          example: 1
         title:
           type: string
+          example: Simple Title
         description:
           type: string
-        userId:
+          example: Simple description
+        user_id:
           type: string
-        senderMail:
+          example: 1
+        sender_mail:
           type: string
+          format: email
         status:
           $ref: "#/components/schemas/Status"
         priority:
           $ref: "#/components/schemas/Priority"
 
+      required:
+        - id
+        - title
+        - description
+        - user_id
+        - senderMail
+        - status
+        - priority
+
+    Id:
+      type: string
+      format: string
+      example: 2
+    MailNotification:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        title:
+          type: string
+          example: title
+        message:
+          type: string
+          example: "Blood tech is a general term that can refer to several different, but related, professions in the healthcare field."
+        type:
+          type: string
+          enum:
+            - BLOOD_REQUEST
+            - ADMIN_MESSAGE
+      required:
+        - id
+        - user_id
+        - title
+        - message
+        - type
     PaginationMetadata:
       type: object
       properties:
@@ -1368,6 +1455,51 @@ components:
           nullable: true
           example: 1
 
+      required:
+        - page
+        - limit
+        - totalItems
+        - totalPages
+    Priority:
+      type: string
+      enum:
+        - low
+        - moderate
+        - high
+        - very_high
+
+    Profile:
+      type: object
+      properties:
+        fullname:
+          type: string
+          example: Monirul Islam
+        father_name:
+          type: string
+          nullable: true
+        mother_name:
+          type: string
+          nullable: true
+        address:
+          type: string
+          nullable: true
+        upzila:
+          type: string
+          nullable: true
+        zila:
+          type: string
+          nullable: true
+      required:
+        - fullname
+    Status:
+      type: string
+      enum:
+        - pending
+        - progress
+        - failed
+        - completed
+        - hold
+
     Timestamp:
       type: object
       properties:
@@ -1379,12 +1511,54 @@ components:
           type: string
           format: date-time
           example: "2024-06-21T08:45:00Z"
-        deleted_at:
+      required:
+        - created_at
+        - updated_at
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          example: 1
+        email:
+          type: string
+          format: email
+        status:
+          $ref: "#/components/schemas/Status"
+        blood:
+          $ref: "#/components/schemas/BloodType"
+        phone_no:
+          type: string
+          nullable: true
+        last_donation:
           type: string
           format: date-time
           nullable: true
-          example: null
 
+      required:
+        - id
+        - email
+        - status
+        - blood
+
+    HistoryCreateDTO:
+      type: object
+      required:
+        - donor
+        - request
+        - status
+        - message
+      properties:
+        donor:
+          type: string
+          example: 1
+        request:
+          type: string
+          example: 1
+        status:
+          $ref: "#/components/schemas/DonationStatus"
+        message:
+          $ref: "#/components/schemas/BloodType"
     BloodRequestDTO:
       type: object
       required:
@@ -1400,7 +1574,7 @@ components:
           example: John Doe
         phone:
           type: string
-          example: "01234567890"
+          example: 01234567890
         address:
           type: string
           example: Dhaka Bangladesh
@@ -1412,7 +1586,6 @@ components:
         description:
           type: string
           example: Need for pregnancy operations
-
     BloodRequestUpdateDTO:
       type: object
       properties:
@@ -1432,44 +1605,18 @@ components:
         status:
           $ref: "#/components/schemas/DonationStatus"
 
-    HistoryBody:
-      type: object
       required:
-        - donor
-        - request
+        - name
+        - phone
+        - address
+        - blood
+        - date
+        - description
         - status
-        - message
-      properties:
-        donor:
-          type: string
-        request:
-          type: string
-        status:
-          $ref: "#/components/schemas/DonationStatus"
-        message:
-          $ref: "#/components/schemas/BloodType"
-
-    MailNotification:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        userId:
-          type: string
-          format: uuid
-        title:
-          type: string
-        message:
-          type: string
-        type:
-          type: string
-          enum: [BLOOD_REQUEST, ADMIN_MESSAGE]
-
     MailNotificationDTO:
       type: object
       properties:
-        userId:
+        user_id:
           type: string
           format: uuid
         title:
@@ -1478,7 +1625,46 @@ components:
           type: string
         type:
           type: string
-          enum: [BLOOD_REQUEST, ADMIN_MESSAGE]
+          enum:
+            - BLOOD_REQUEST
+            - ADMIN_MESSAGE
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - user_id
+        - title
+        - message
+        - type
+    RegisterDTO:
+      required:
+        - fullname
+        - email
+        - password
+        - blood
+        - phone
+      type: object
+      properties:
+        fullname:
+          type: string
+          format: string
+          example: John dog
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+          example: securePassword123
+        blood:
+          $ref: "#/components/schemas/BloodType"
+        phone:
+          type: string
+          example: 01900000000
+
   parameters:
     pageParam:
       name: page
@@ -1489,7 +1675,6 @@ components:
         type: integer
         default: 2
         minimum: 1
-
     limitParam:
       in: query
       name: limit
@@ -1517,12 +1702,11 @@ components:
         type: string
         example: 2
       required: true
-
   responses:
     400:
       description: Bad request
       content:
-        "application/json":
+        application/json:
           schema:
             type: object
             properties:
@@ -1533,7 +1717,7 @@ components:
               message:
                 type: string
                 format: string
-                example: "Bad request"
+                example: Bad request
               data:
                 type: array
                 items:
@@ -1542,21 +1726,21 @@ components:
                     code:
                       type: string
                       format: string
-                      example: "too_small"
+                      example: too_small
                     pathname:
                       type: array
                       items:
                         type: string
                         format: string
-                        example: "id"
+                        example: id
                     message:
                       type: string
                       format: string
-                      example: "Invalid id"
+                      example: Invalid id
     401:
       description: Unauthorized
       content:
-        "application/json":
+        application/json:
           schema:
             type: object
             properties:
@@ -1567,11 +1751,11 @@ components:
               message:
                 type: string
                 format: string
-                example: "Unauthorized"
+                example: Unauthorized
     403:
       description: Unauthorized
       content:
-        "application/json":
+        application/json:
           schema:
             type: object
             properties:
@@ -1582,11 +1766,11 @@ components:
               message:
                 type: string
                 format: string
-                example: "You are not authorized to perform this actions"
+                example: You are not authorized to perform this actions
     404:
       description: Not Found
       content:
-        "application/json":
+        application/json:
           schema:
             type: object
             properties:
@@ -1597,12 +1781,11 @@ components:
               message:
                 type: string
                 format: string
-                example: "Your requested resource not found!"
-
+                example: Your requested resource not found!
     500:
       description: Internal Server Error
       content:
-        "application/json":
+        application/json:
           schema:
             type: object
             properties:
@@ -1613,4 +1796,7 @@ components:
               message:
                 type: string
                 format: string
-                example: "We sorry for the inconvenience. We will fix this asap"
+                example: We sorry for the inconvenience. We will fix this asap
+  examples: {}
+  requestBodies: {}
+  headers: {}
