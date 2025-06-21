@@ -1,6 +1,6 @@
 {
   "name": "@bms/shared",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -8,6 +8,26 @@
     ".": {
       "types": "./dist/index.d.ts",
       "require": "./dist/index.js"
+    },
+    "./errors": {
+      "types": "./dist/errors/*.d.ts",
+      "require": "./dist/errors/*.js"
+    },
+    "./formatter": {
+      "types": "./dist/formatter/*.d.ts",
+      "require": "./dist/formatter/*.js"
+    },
+    "./hash-password": {
+      "types": "./dist/hash-password/*.d.ts",
+      "require": "./dist/hash-password/*.js"
+    },
+    "./json-web-token": {
+      "types": "./dist/json-web-token/*.d.ts",
+      "require": "./dist/json-web-token/*.js"
+    },
+    "./logger": {
+      "types": "./dist/logger/*.d.ts",
+      "require": "./dist/logger/*.js"
     }
   },
   "scripts": {
