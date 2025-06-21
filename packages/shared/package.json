@@ -1,0 +1,33 @@
+{
+  "name": "@bms/shared",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "dev": "tsc -watch",
+    "build": "tsc",
+    "test": "jest",
+    "clear": "rimraf dist",
+    "check:types": "tsc --noEmit"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@bms/eslint-config": "workspace:*",
+    "@bms/typescript-config": "workspace:*",
+    "@types/jsonwebtoken": "^9.0.9",
+    "rimraf": "^6.0.1"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "jsonwebtoken": "^9.0.2"
+  }
+}
