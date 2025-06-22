@@ -1,8 +1,29 @@
 import { z } from "zod";
-import { CreateUserSchema } from "./user.schemas";
 
-export const LoginUserSchema = z.object({
-  email: z.string().min(1, "Email is required!"),
-  password: z.string().min(1, "Password is required!"),
-});
-export const RegisterUserSchema = CreateUserSchema.omit({ role: true });
+export class AuthSchema {
+  private static loginUser = z.object({
+    email: z.string().min(1, "Email is required!"),
+    password: z.string().min(1, "Password is required!"),
+  });
+
+  private static registerUser = z.object({
+    name: z.string().min(1, "Name is required!"),
+    email: z
+      .string()
+      .min(1, "Email is required!")
+      .email("Email must be valid!"),
+    password: z
+      .string()
+      .min(1, "Password is required!")
+      .min(6, "Password must be more than 6 chars")
+      .max(32, "Password must not be more than 32 chars"),
+  });
+
+  static get login() {
+    return this.loginUser;
+  }
+
+  static get register() {
+    return this.registerUser;
+  }
+}

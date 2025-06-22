@@ -1,9 +1,11 @@
 import { ICustomError, ZodError } from "../ICustomError";
 
-export class UnauthenticatedError implements ICustomError {
-  private readonly code: number = 401;
-  private message: string = "Unauthenticated";
-  constructor(private errors: ZodError[] = []) {}
+export class InternalServerError implements ICustomError {
+  private readonly code: number = 500;
+  constructor(
+    private message: string = "Internal Server Error",
+    private errors: ZodError[] = []
+  ) {}
   getErrors(): ZodError[] {
     return this.errors;
   }

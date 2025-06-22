@@ -10,20 +10,20 @@
       "require": "./dist/index.js"
     },
     "./errors": {
-      "types": "./dist/errors/*.d.ts",
-      "require": "./dist/errors/*.js"
+      "types": "./dist/errors/index.d.ts",
+      "require": "./dist/errors/index.js"
     },
     "./formatter": {
       "types": "./dist/formatter/*.d.ts",
       "require": "./dist/formatter/*.js"
     },
     "./hash-password": {
-      "types": "./dist/hash-password/*.d.ts",
-      "require": "./dist/hash-password/*.js"
+      "types": "./dist/hash-password/index.d.ts",
+      "require": "./dist/hash-password/index.js"
     },
     "./json-web-token": {
-      "types": "./dist/json-web-token/*.d.ts",
-      "require": "./dist/json-web-token/*.js"
+      "types": "./dist/json-web-token/index.d.ts",
+      "require": "./dist/json-web-token/index.js"
     },
     "./logger": {
       "types": "./dist/logger/*.d.ts",

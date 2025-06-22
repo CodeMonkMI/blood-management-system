@@ -1,5 +1,5 @@
 import { PermissionManger } from "@/pm";
-
+import { UnauthenticatedError, UnauthorizedError } from "@bms/shared/errors";
 import { NextFunction, Request, Response } from "express";
 import passport from "passport";
 import {
@@ -26,30 +26,6 @@ type AuthorizeOptions = {
 
 export class PassportMiddleware {
   constructor() {}
-
-  private getOptions(): StrategyOptionsWithoutRequest {
-    return {
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      secretOrKey: SECRET_KEY,
-    };
-  }
-
-  private verifyUser() {
-    return async (payload: JWTPayloadType, done: VerifiedCallback) => {
-      try {
-        const id = payload.id;
-        if (!id) {
-          return done(new Error("invalid user"), null);
-        }
-
-        // todo check if user exist
-
-        return done(null, { user: {} });
-      } catch (error) {
-        return done(error, null);
-      }
-    };
-  }
 
   async init() {
     const opts = this.getOptions();
@@ -79,10 +55,11 @@ export class PassportMiddleware {
       return next();
     })(req, res, next);
   }
+
   authorize({ permissions, role }: AuthorizeOptions) {
-    return async (req: Request, res: Response, next: NextFunction) => {
+    return async (req: Request, _res: Response, next: NextFunction) => {
       if (!req.pm) {
-        throw new BasicError(401, "Unauthorized", ["Unauthorized"]);
+        throw new UnauthenticatedError();
       }
 
       const checkRole = () => {
@@ -101,11 +78,37 @@ export class PassportMiddleware {
       const hasAccess = checkRole() && checkPermissions();
 
       if (!hasAccess) {
-        throw new BasicError(403, "Forbidden", ["Forbidden"]);
+        throw new UnauthorizedError();
       }
       next();
     };
   }
+
+  private getOptions(): StrategyOptionsWithoutRequest {
+    return {
+      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      secretOrKey: SECRET_KEY,
+    };
+  }
+
+  private verifyUser() {
+    return async (payload: JWTPayloadType, done: VerifiedCallback) => {
+      try {
+        const id = payload.id;
+        if (!id) {
+          return done(new UnauthenticatedError(), null);
+        }
+
+        // todo check if user exist
+
+        return done(null, { user: {} });
+      } catch (error) {
+        return done(error, null);
+      }
+    };
+  }
 }
 
-export const authMiddleware = new PassportMiddleware();
+const { authenticate, authorize } = new PassportMiddleware();
+
+export { authenticate, authorize };

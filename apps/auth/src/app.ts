@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 import express, { Express, Request, Response } from "express";
 import morgan from "morgan";
 import passport from "passport";
-import { authMiddleware } from "./auth/auth.middleware";
+import { PassportMiddleware } from "./auth/auth.middleware";
 import authRouter from "./auth/auth.router";
 import { PermissionManger } from "./pm";
 
@@ -28,7 +28,7 @@ export function createApp() {
 
   // auth middleware
   app.use(passport.initialize());
-  authMiddleware.init();
+  new PassportMiddleware().init();
 
   app.use("/", authRouter);
 

@@ -1,6 +1,6 @@
 import { ICustomError, ZodError } from "../ICustomError";
 
-export class Unauthorized implements ICustomError {
+export class UnauthorizedError implements ICustomError {
   private readonly code: number = 403;
   private message: string = "You are not allow to perform this action";
   constructor(private errors: ZodError[] = []) {}

@@ -1,5 +1,5 @@
-import { HashPassword } from "@/hash-password/HashPassword";
 import bcrypt from "bcryptjs";
+import { HashPassword } from "./HashPassword";
 
 export class BcryptJsHashPassword implements HashPassword {
   hash(password: string): string | Promise<string> {
@@ -9,3 +9,5 @@ export class BcryptJsHashPassword implements HashPassword {
     return bcrypt.compare(password, hash);
   }
 }
+
+export { type HashPassword };

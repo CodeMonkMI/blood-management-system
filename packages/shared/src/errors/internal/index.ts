@@ -1,1 +1,1 @@
-export * from "./validation-error";
+export * from "./internal-error";

@@ -11,3 +11,5 @@ export class ImplJsonWebToken<T> implements JsonWebToken<T> {
     return jwt.verify(token, jwtSecret) as T;
   }
 }
+
+export { type JsonWebToken };

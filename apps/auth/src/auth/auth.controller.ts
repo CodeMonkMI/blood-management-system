@@ -1,57 +1,62 @@
-import { CreateNewUserUseCase } from "@todo/core/use-cases/create-new-user";
-import { UserLoginUseCase } from "@todo/core/use-cases/user-login";
-import { ViewUserUseCase } from "@todo/core/use-cases/view-user";
-import { getUserRepository } from "@todo/database";
-import { ImplValidationError } from "@todo/errors/custom-error/validation-error";
-import { ZodError } from "@todo/errors/interface/ValidationError";
-import { BcryptJsHashPassword, ImplJsonWebToken } from "@todo/shared";
-import { Request, Response } from "express";
-import { LoginUserSchema, RegisterUserSchema } from "./auth.schemas";
+import { ValidationError, ZodError } from "@bms/shared/errors";
+import { NextFunction, Request, Response } from "express";
+import { AuthSchema } from "./auth.schemas";
+import { AuthService } from "./auth.service";
 
-const hashPassword = new BcryptJsHashPassword();
-const jwt = new ImplJsonWebToken();
-export const login = async (req: Request, res: Response) => {
-  const parsedData = LoginUserSchema.safeParse(req.body);
-  if (!parsedData.success) {
-    const errors = parsedData.error.errors as ZodError[];
-    throw new ImplValidationError(400, "Login failed!", errors);
+export class AuthController {
+  constructor(private authService: AuthService = new AuthService()) {}
+
+  async login(req: Request, res: Response, next: NextFunction) {
+    try {
+      const parsedData = AuthSchema.login.safeParse(req.body);
+      if (!parsedData.success) {
+        const errors = parsedData.error.errors as ZodError[];
+        throw new ValidationError("Login failed!", errors);
+      }
+
+      const token = await this.authService.login(parsedData.data);
+
+      res.status(202).json({ token });
+      return;
+    } catch (error) {
+      next(error);
+    }
   }
-  const data = parsedData.data;
 
-  const createTodoUseCase = new UserLoginUseCase(
-    getUserRepository(),
-    hashPassword,
-    jwt
-  );
-  const token = await createTodoUseCase.execute(data.email, data.password);
+  async me(req: Request, res: Response, next: NextFunction) {
+    try {
+      const id = (req.user as any)?.id;
 
-  res.status(202).json({ token });
-  return;
-};
-export const me = async (req: Request, res: Response) => {
-  const id = (req.user as any)?.id;
+      const user = await this.authService.me(id);
 
-  const viewUserUseCase = new ViewUserUseCase(getUserRepository());
-  const user = await viewUserUseCase.execute(id);
-
-  res.status(200).json(user);
-  return;
-};
-
-export const register = async (req: Request, res: Response) => {
-  const parsedData = RegisterUserSchema.safeParse(req.body);
-  if (!parsedData.success) {
-    const errors = parsedData.error.errors as ZodError[];
-    throw new ImplValidationError(400, "Registration failed!", errors);
+      res.status(200).json(user);
+      return;
+    } catch (error) {
+      next(error);
+    }
   }
-  const data = parsedData.data;
 
-  const createTodoUseCase = new CreateNewUserUseCase(
-    getUserRepository(),
-    hashPassword
-  );
-  await createTodoUseCase.execute(data);
+  async register(req: Request, res: Response, next: NextFunction) {
+    try {
+      const parsedData = AuthSchema.register.safeParse(req.body);
+      if (!parsedData.success) {
+        const errors = parsedData.error.errors as ZodError[];
+        throw new ValidationError("Registration failed!", errors);
+      }
+      const data = parsedData.data;
 
-  res.status(202).json({ message: "User created successfully" });
-  return;
-};
+      await this.authService.login(data);
+
+      // todo send create user request to user service
+
+      res.status(202).json({ message: "User register successfully" });
+      return;
+    } catch (error) {
+      next(error);
+    }
+  }
+}
+
+const { login, me, register } = new AuthController();
+
+export { login, me, register };
