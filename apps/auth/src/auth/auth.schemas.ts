@@ -30,6 +30,23 @@ export class AuthSchema {
       .max(32, "Password must not be more than 32 chars"),
     blood: z.nativeEnum(BLOOD_TYPE),
   });
+  private static authorizeRoute = z
+    .object({
+      role: z.string().optional(),
+      permission: z.string().optional(),
+    })
+    .superRefine((data, ctx) => {
+      if (!data.role && !data.permission) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["role", "permission"],
+          message: "Either role or permission is required!",
+          fatal: true,
+        });
+        return;
+      }
+      return data;
+    });
 
   static get login() {
     return this.loginUser;
@@ -37,5 +54,8 @@ export class AuthSchema {
 
   static get register() {
     return this.registerUser;
+  }
+  static get authorize() {
+    return this.authorizeRoute;
   }
 }

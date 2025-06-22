@@ -8,6 +8,7 @@ import {
   StrategyOptionsWithoutRequest,
   VerifiedCallback,
 } from "passport-jwt";
+import { AuthRepository } from "./auth.repository";
 
 const SECRET_KEY = process.env.JWT_SECRET || "my_old_secret";
 
@@ -23,9 +24,15 @@ type AuthorizeOptions = {
   role: string;
   permissions: string | string[];
 };
+type AuthorizeRouteOptions = {
+  role: string;
+  permissions: string | string[];
+};
 
 export class PassportMiddleware {
-  constructor() {}
+  constructor(
+    private readonly authRepository: AuthRepository = new AuthRepository()
+  ) {}
 
   async init() {
     const opts = this.getOptions();
@@ -39,12 +46,10 @@ export class PassportMiddleware {
         return next(err);
       }
       if (!data) {
-        return res.status(401).json({
-          message: "Unauthorized!",
-        });
+        throw new UnauthenticatedError();
       }
-      // todo update user types
-      const user = data.user as any;
+
+      const user = data.user;
       const pm = new PermissionManger({
         roles: [user.role.toLocaleLowerCase()],
         permission: [],
@@ -84,6 +89,31 @@ export class PassportMiddleware {
     };
   }
 
+  authorizeRoute({ permissions, role }: AuthorizeRouteOptions) {
+    const pm = new PermissionManger({
+      roles: [role.toLocaleLowerCase()],
+      permission: [],
+    });
+    const checkRole = () => {
+      if (!role) return true;
+      return pm?.hasRole(role) ?? false;
+    };
+
+    const checkPermissions = () => {
+      if (!permissions) return true;
+      if (Array.isArray(permissions)) {
+        return pm?.hasPermissions(permissions) ?? false;
+      }
+      return pm?.hasPermission(permissions);
+    };
+
+    const hasAccess = checkRole() && checkPermissions();
+
+    if (!hasAccess) throw new UnauthorizedError();
+
+    return true;
+  }
+
   private getOptions(): StrategyOptionsWithoutRequest {
     return {
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -99,9 +129,11 @@ export class PassportMiddleware {
           return done(new UnauthenticatedError(), null);
         }
 
-        // todo check if user exist
+        const user = await this.authRepository.findById(id as any);
 
-        return done(null, { user: {} });
+        if (!user) throw new UnauthenticatedError();
+
+        return done(null, { user });
       } catch (error) {
         return done(error, null);
       }
@@ -109,6 +141,6 @@ export class PassportMiddleware {
   }
 }
 
-const { authenticate, authorize } = new PassportMiddleware();
+const { authenticate, authorize, authorizeRoute } = new PassportMiddleware();
 
-export { authenticate, authorize };
+export { authenticate, authorize, authorizeRoute };

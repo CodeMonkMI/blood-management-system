@@ -215,7 +215,7 @@ paths:
                     - admin
                     - user
                   example: user
-                attribute:
+                permissions:
                   type: string
                   format: string
                   example: user:get
