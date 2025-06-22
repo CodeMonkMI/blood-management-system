@@ -1,92 +1,96 @@
-export interface User {
-  id: string;
-  email: string;
-  name: string;
-  role: string;
-  createdAt: Date;
-}
-
-export type UserFilter = {
-  completed?: boolean;
-};
-
-export type UserPagination = {
-  page: number;
-  limit: number;
-};
-
-export type UserID = string;
-
-export enum UserRoleEnum {
-  SUPER_ADMIN = "SUPER_ADMIN",
-  ADMIN = "ADMIN",
-  USER = "USER",
-}
-
-export type UserRole = `${UserRoleEnum}`;
-
-export type CreateUserDTO = {
-  email: string;
-  name: string;
-  password: string;
-  role?: UserRole;
-};
-export type UpdateUserDTO = {
-  email?: string;
-  name?: string;
-  role?: UserRole;
-};
-
-export type UserWithPassword = User & {
-  password: string;
-};
+import { db as database, DatabaseClient } from "@/db";
+import { InternalServerError, NotFoundError } from "@bms/shared/errors";
+import { eq } from "drizzle-orm";
+import {
+  NewUser,
+  UpdateUser,
+  User,
+  UserId,
+  UsersTable,
+  UserWithPassword,
+} from "./auth.entities";
 
 export interface IAuthRepository {
-  findAll(options?: {
-    filter?: UserFilter;
-    pagination?: UserPagination;
-  }): Promise<{ total: number; data: User[] }>;
-  findById(id: UserID): Promise<User>;
-  create(data: CreateUserDTO): Promise<User>;
-  findByEmail(email: string): Promise<User>;
-  findByEmailWithPassword(email: string): Promise<UserWithPassword>;
-  update(id: UserID, data: UpdateUserDTO): Promise<User>;
-  remove(id: UserID): Promise<unknown>;
+  create(data: NewUser): Promise<User>;
+  findByEmail(email: string): Promise<User | undefined>;
+  findByEmailWithPassword(email: string): Promise<UserWithPassword | undefined>;
+  update(id: UserId, data: UpdateUser): Promise<User | undefined>;
+  remove(id: UserId): Promise<void>;
 }
 
 export class AuthRepository implements IAuthRepository {
-  findAll(options?: {
-    filter?: UserFilter;
-    pagination?: UserPagination;
-  }): Promise<{ total: number; data: User[] }> {
-    throw new Error("Method not implemented.");
+  constructor(
+    private db: DatabaseClient = database,
+    private table = UsersTable
+  ) {}
+  async create(data: NewUser): Promise<User> {
+    const user = await this.db.insert(this.table).values(data).returning({
+      id: this.table.id,
+      email: this.table.email,
+      status: this.table.status,
+      role: this.table.role,
+      createdAt: this.table.createdAt,
+    });
+
+    return user[0]!;
   }
-  findById(id: UserID): Promise<User> {
-    throw new Error("Method not implemented.");
+  async findByEmail(email: string): Promise<User | undefined> {
+    const data = await this.db
+      .select({
+        id: this.table.id,
+        email: this.table.email,
+        status: this.table.status,
+        role: this.table.role,
+        createdAt: this.table.createdAt,
+      })
+      .from(UsersTable)
+      .where(eq(this.table.email, email))
+      .execute();
+    return data?.[0] || undefined;
   }
-  create(data: CreateUserDTO): Promise<User> {
-    throw new Error("Method not implemented.");
+  async findByEmailWithPassword(
+    email: string
+  ): Promise<UserWithPassword | undefined> {
+    const data = await this.db
+      .select({
+        id: this.table.id,
+        email: this.table.email,
+        status: this.table.status,
+        role: this.table.role,
+        createdAt: this.table.createdAt,
+        password: this.table.password,
+      })
+      .from(UsersTable)
+      .where(eq(this.table.email, email))
+      .execute();
+    return data?.[0] || undefined;
   }
-  findByEmail(email: string): Promise<User> {
-    throw new Error("Method not implemented.");
+  async update(id: UserId, data: UpdateUser): Promise<User> {
+    const findUser = await this.findById(id);
+    if (!findUser) throw new NotFoundError();
+    const updatedData = await this.db.update(this.table).set(data).execute();
+    if (!updatedData) throw new InternalServerError();
+    return (await this.findById(id))!;
   }
-  findByEmailWithPassword(email: string): Promise<UserWithPassword> {
-    throw new Error("Method not implemented.");
-  }
-  update(id: UserID, data: UpdateUserDTO): Promise<User> {
-    throw new Error("Method not implemented.");
-  }
-  remove(id: UserID): Promise<unknown> {
-    throw new Error("Method not implemented.");
+  async remove(id: UserId): Promise<void> {
+    const findUser = await this.findById(id);
+    if (!findUser) throw new NotFoundError();
+    await this.db.delete(this.table).where(eq(this.table.id, id)).execute();
   }
 
-  private toUser(user: any): User {
-    return {
-      email: user.email,
-      id: user.id,
-      name: user.name,
-      role: user.role,
-      createdAt: user.createdAt,
-    };
+  async findById(id: UserId): Promise<User | undefined> {
+    const userData = await this.db
+      .select({
+        id: this.table.id,
+        email: this.table.email,
+        status: this.table.status,
+        role: this.table.role,
+        createdAt: this.table.createdAt,
+      })
+      .from(this.table)
+      .where(eq(this.table.id, id))
+      .execute();
+    if (!userData) return;
+    return userData[0];
   }
 }

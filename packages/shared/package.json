@@ -28,6 +28,10 @@
     "./logger": {
       "types": "./dist/logger/*.d.ts",
       "require": "./dist/logger/*.js"
+    },
+    "./types": {
+      "types": "./dist/types/index.d.ts",
+      "require": "./dist/types/index.js"
     }
   },
   "scripts": {

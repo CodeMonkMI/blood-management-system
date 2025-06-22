@@ -2,10 +2,7 @@ import { ICustomError } from "../ICustomError";
 
 export class NotFoundError implements ICustomError {
   private readonly code: number = 404;
-  constructor(
-    private message: string,
-    private errors: string
-  ) {}
+  constructor(private message: string = "Your requested resource not found!") {}
   getCode(): number {
     return this.code;
   }
@@ -13,6 +10,6 @@ export class NotFoundError implements ICustomError {
     return this.message;
   }
   getErrors(): string[] {
-    return [this.errors];
+    return [this.message];
   }
 }
