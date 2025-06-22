@@ -3,9 +3,11 @@ import { InternalServerError, NotFoundError } from "@bms/shared/errors";
 import { eq } from "drizzle-orm";
 import {
   NewUser,
+  RoleTable,
   UpdateUser,
   User,
   UserId,
+  UserRole,
   UsersTable,
   UserWithPassword,
 } from "./auth.entities";
@@ -92,5 +94,15 @@ export class AuthRepository implements IAuthRepository {
       .execute();
     if (!userData) return;
     return userData[0];
+  }
+
+  async findUserRole(): Promise<UserRole> {
+    const role = await this.db
+      .select()
+      .from(RoleTable)
+      .where(eq(RoleTable.role, "user"))
+      .execute();
+    if (!role) throw new InternalServerError("No role founded");
+    return role[0]!;
   }
 }

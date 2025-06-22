@@ -1,18 +1,11 @@
-import { ICustomError, ZodError } from "../ICustomError";
+import { Error } from "../base/error";
 
-export class InternalServerError implements ICustomError {
-  private readonly code: number = 500;
-  constructor(
-    private message: string = "Internal Server Error",
-    private errors: ZodError[] = []
-  ) {}
-  getErrors(): ZodError[] {
-    return this.errors;
-  }
-  getCode(): number {
-    return this.code;
-  }
-  getMessage(): string {
-    return this.message;
+export class InternalServerError extends Error {
+  statusCode: number = 500;
+  errorsData: any[] = [];
+  messageData: string = "We sorry for the inconvenience. We will fix this asap";
+  constructor(msg: string = "") {
+    super();
+    if (msg) this.messageData = msg;
   }
 }

@@ -4,7 +4,11 @@ import { AuthSchema } from "./auth.schemas";
 import { AuthService } from "./auth.service";
 
 export class AuthController {
-  constructor(private authService: AuthService = new AuthService()) {}
+  constructor(private authService: AuthService = new AuthService()) {
+    this.login = this.login.bind(this);
+    this.me = this.me.bind(this);
+    this.register = this.register.bind(this);
+  }
 
   async login(req: Request, res: Response, next: NextFunction) {
     try {
@@ -14,9 +18,20 @@ export class AuthController {
         throw new ValidationError("Login failed!", errors);
       }
 
-      const token = await this.authService.login(parsedData.data);
+      const access_token = await this.authService.login(parsedData.data);
 
-      res.status(202).json({ token });
+      res.status(200).json({
+        success: true,
+        message: "User register successfully",
+        data: {
+          access_token,
+        },
+        links: {
+          self: "/auth/login",
+          me: "/auth/me",
+          request: "/request",
+        },
+      });
       return;
     } catch (error) {
       next(error);
@@ -45,11 +60,22 @@ export class AuthController {
       }
       const data = parsedData.data;
 
-      await this.authService.login(data);
+      const access_token = await this.authService.register(data);
 
       // todo send create user request to user service
 
-      res.status(202).json({ message: "User register successfully" });
+      res.status(201).json({
+        success: true,
+        message: "User register successfully",
+        data: {
+          access_token,
+        },
+        links: {
+          self: "/auth/register",
+          me: "/auth/me",
+          request: "/request",
+        },
+      });
       return;
     } catch (error) {
       next(error);

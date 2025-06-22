@@ -5,12 +5,13 @@ import {
 } from "@bms/shared";
 import { ValidationError, ZodError } from "@bms/shared/errors";
 import { z } from "zod";
-import { AuthRepository, User } from "./auth.repository";
+import { User, UserId } from "./auth.entities";
+import { AuthRepository } from "./auth.repository";
 import { AuthSchema } from "./auth.schemas";
 
 export class AuthService {
   constructor(
-    private readonly auth: AuthRepository = new AuthRepository(),
+    private readonly authRepository: AuthRepository = new AuthRepository(),
     private readonly hashPassword: HashPassword = new BcryptJsHashPassword(),
     private readonly jsonwebtoken: ImplJsonWebToken<{
       id: string;
@@ -27,7 +28,7 @@ export class AuthService {
       },
     ];
 
-    const user = await this.auth.findByEmailWithPassword(data.email);
+    const user = await this.authRepository.findByEmailWithPassword(data.email);
     if (!user) {
       throw new ValidationError("Failed to login!", errors);
     }
@@ -47,14 +48,13 @@ export class AuthService {
     return token;
   }
 
-  async me(id: string): Promise<User> {
-    const user = await this.auth.findById(id);
-
-    return user;
+  async me(id: UserId): Promise<User> {
+    const user = await this.authRepository.findById(id);
+    return user!;
   }
 
-  async register(data: z.infer<typeof AuthSchema.register>): Promise<User> {
-    const user = await this.auth.findByEmail(data.email);
+  async register(data: z.infer<typeof AuthSchema.register>): Promise<string> {
+    const user = await this.authRepository.findByEmail(data.email);
 
     if (user) {
       const errors: ZodError[] = [
@@ -67,12 +67,20 @@ export class AuthService {
       throw new ValidationError("Email is already exists", errors);
     }
 
+    const role = await this.authRepository.findUserRole();
+
     const hashPassword = await this.hashPassword.hash(data.password);
-    const createdUser = await this.auth.create({
+    const createdUser = await this.authRepository.create({
       ...data,
+      role: role.id,
       password: hashPassword,
     });
 
-    return createdUser;
+    const token = await this.login({
+      email: data.email,
+      password: data.password,
+    });
+    console.log(createdUser);
+    return token;
   }
 }

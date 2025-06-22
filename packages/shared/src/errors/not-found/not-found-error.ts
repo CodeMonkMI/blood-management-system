@@ -1,15 +1,11 @@
-import { ICustomError } from "../ICustomError";
+import { Error } from "../base/error";
 
-export class NotFoundError implements ICustomError {
-  private readonly code: number = 404;
-  constructor(private message: string = "Your requested resource not found!") {}
-  getCode(): number {
-    return this.code;
-  }
-  getMessage(): string {
-    return this.message;
-  }
-  getErrors(): string[] {
-    return [this.message];
+export class NotFoundError extends Error {
+  statusCode: number = 404;
+  errorsData: any[] = [];
+  messageData: string = "Your requested resource not found!";
+  constructor(msg: string = "") {
+    super();
+    if (msg) this.messageData = msg;
   }
 }

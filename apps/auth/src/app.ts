@@ -1,3 +1,4 @@
+import { Error } from "@bms/shared/errors";
 import cors from "cors";
 import dotenv from "dotenv";
 import express, { Express, Request, Response } from "express";
@@ -48,10 +49,24 @@ export function createApp() {
 
   // 500 internal server error handler
   app.use((err: any, _req: any, res: Response, _next: any) => {
+    let statusCode = 500;
+    let responseMessage: {
+      success: boolean;
+      message: string;
+      data?: string[];
+    } = {
+      success: false,
+      message: "Something Went wrong! Please try again later!",
+    };
     console.log(err);
-    res
-      .status(500)
-      .json({ message: "Something Went wrong! Please try again later!" });
+    if (err instanceof Error) {
+      statusCode = err.code;
+      responseMessage.message = err.message;
+      if (err.errors.length > 0) {
+        responseMessage.data = err.errors;
+      }
+    }
+    res.status(statusCode).json(responseMessage);
   });
 
   return app;

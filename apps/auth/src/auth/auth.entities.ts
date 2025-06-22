@@ -18,7 +18,9 @@ export const UsersTable = pgTable("users", {
   email: varchar("email", { length: 255 }).unique(),
   password: varchar("name", { length: 255 }).notNull(),
   status: UserStatus("status").default("pending"),
-  role: uuid("role").references(() => RoleTable.id),
+  role: uuid("role")
+    .references(() => RoleTable.id)
+    .notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
   deletedAt: timestamp("deleted_at", { withTimezone: true }),
@@ -40,3 +42,6 @@ export type User = Omit<UserWithPassword, "password">;
 export type NewUser = typeof UsersTable.$inferInsert;
 export type UpdateUser = Partial<User>;
 export type UserId = typeof UsersTable.id;
+
+export type NewRole = typeof RoleTable.$inferInsert;
+export type UserRole = typeof RoleTable.$inferSelect;

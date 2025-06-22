@@ -1,16 +1,11 @@
-import { ICustomError, ZodError } from "../ICustomError";
+import { Error } from "../base/error";
 
-export class UnauthorizedError implements ICustomError {
-  private readonly code: number = 403;
-  private message: string = "You are not allow to perform this action";
-  constructor(private errors: ZodError[] = []) {}
-  getErrors(): ZodError[] {
-    return this.errors;
-  }
-  getCode(): number {
-    return this.code;
-  }
-  getMessage(): string {
-    return this.message;
+export class UnauthorizedError extends Error {
+  statusCode: number = 401;
+  messageData: string = "Unauthenticated";
+  errorsData: any[] = [];
+  constructor(msg: string = "") {
+    super();
+    if (msg) this.messageData = msg;
   }
 }

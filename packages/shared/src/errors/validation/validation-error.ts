@@ -1,18 +1,20 @@
-import { IValidationError, ZodError } from "../ICustomError";
+import { Error } from "../base/error";
+import { ZodError } from "../ICustomError";
 
-export class ValidationError implements IValidationError {
-  private readonly code: number = 400;
-  constructor(
-    private message: string,
-    private errors: ZodError[]
-  ) {}
-  getErrors(): ZodError[] {
-    return this.errors;
-  }
-  getCode(): number {
-    return this.code;
-  }
-  getMessage(): string {
-    return this.message;
+export class ValidationError extends Error {
+  statusCode: number = 400;
+  messageData: string = "Bad request";
+  errorsData: ZodError[] = [];
+  constructor(msg: string, errors: ZodError[] = []) {
+    super();
+    this.messageData = msg;
+
+    this.errorsData = errors.map((err) => {
+      return {
+        code: err.code,
+        message: err.message,
+        path: err.path,
+      };
+    });
   }
 }

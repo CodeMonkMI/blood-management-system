@@ -1,17 +1,11 @@
 export interface ICustomError {
-  getCode(): number;
-  getMessage(): string;
-  getErrors(): unknown[];
+  get code(): number;
+  get message(): string;
+  get errors(): any[];
 }
 
 export type ZodError = {
   code: string | number;
-  expected?: string;
-  received?: string;
   path: string[];
   message: string;
 };
-
-export interface IValidationError extends ICustomError {
-  getErrors(): ZodError[];
-}

@@ -1,5 +1,16 @@
 import { z } from "zod";
 
+enum BLOOD_TYPE {
+  A_POSITIVE = "A_POSITIVE",
+  A_NEGATIVE = "A_NEGATIVE",
+  B_POSITIVE = "B_POSITIVE",
+  B_NEGATIVE = "B_NEGATIVE",
+  AB_POSITIVE = "AB_POSITIVE",
+  AB_NEGATIVE = "AB_NEGATIVE",
+  O_POSITIVE = "O_POSITIVE",
+  O_NEGATIVE = "O_NEGATIVE",
+}
+
 export class AuthSchema {
   private static loginUser = z.object({
     email: z.string().min(1, "Email is required!"),
@@ -17,6 +28,7 @@ export class AuthSchema {
       .min(1, "Password is required!")
       .min(6, "Password must be more than 6 chars")
       .max(32, "Password must not be more than 32 chars"),
+    blood: z.nativeEnum(BLOOD_TYPE),
   });
 
   static get login() {

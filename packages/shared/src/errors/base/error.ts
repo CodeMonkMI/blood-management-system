@@ -1,18 +1,17 @@
 import { ICustomError } from "../ICustomError";
 
-export class Error implements ICustomError {
-  constructor(
-    private readonly code: number,
-    private message: string,
-    private errors: string[]
-  ) {}
-  getCode(): number {
-    return this.code;
+export abstract class Error implements ICustomError {
+  abstract statusCode: number;
+  abstract messageData: string;
+  abstract errorsData: any[];
+
+  get code(): number {
+    return this.statusCode;
   }
-  getMessage(): string {
-    return this.message;
+  get message(): string {
+    return this.messageData;
   }
-  getErrors(): string[] {
-    return this.errors;
+  get errors(): string[] {
+    return this.errorsData;
   }
 }
