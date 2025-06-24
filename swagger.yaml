@@ -884,8 +884,6 @@ paths:
           $ref: "#/components/responses/401"
         403:
           $ref: "#/components/responses/403"
-        404:
-          $ref: "#/components/responses/404"
         500:
           $ref: "#/components/responses/500"
       description: Performs GET operation on /requests
@@ -919,6 +917,31 @@ paths:
                           id:
                             type: string
                             example: req_001
+                          status:
+                            $ref: "#/components/schemas/DonationStatus"
+
+                      - type: object
+                        properties:
+                          id:
+                            type: string
+                            example: 2
+                          name:
+                            type: string
+                            example: Monirul Islam
+                          phone:
+                            type: string
+                            example: "01234567890"
+                          address:
+                            type: string
+                            example: Dhaka, Bangladesh
+                          date:
+                            type: string
+                            format: date-time
+                          blood:
+                            $ref: "#/components/schemas/BloodType"
+                          description:
+                            type: string
+                            example: "Blood tech is a general term that can refer to several different, but related, professions in the healthcare field"
                           status:
                             $ref: "#/components/schemas/DonationStatus"
                       - $ref: "#/components/schemas/Timestamp"
@@ -1362,7 +1385,7 @@ components:
     DonationStatus:
       type: string
       enum:
-        - request
+        - pending
         - verified
         - progress
         - ready
