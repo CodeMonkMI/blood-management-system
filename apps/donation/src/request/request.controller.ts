@@ -3,6 +3,11 @@ import { NextFunction, Request, Response } from "express";
 import { RequestSchema } from "./request.schemas";
 import { RequestService } from "./request.service";
 
+type PaginationParam = {
+  limit?: string;
+  page?: string;
+};
+
 export class RequestController {
   constructor(
     private readonly requestService: RequestService = new RequestService()
@@ -15,15 +20,20 @@ export class RequestController {
     this.verify = this.verify.bind(this);
   }
 
-  async all(req: Request, res: Response, next: NextFunction) {
+  async all(req: Request<PaginationParam>, res: Response, next: NextFunction) {
     try {
-      const requestData = await this.requestService.getAll();
+      const { limit = "10", page = "1" } = req.query;
+
+      const { data, pagination } = await this.requestService.getAll({
+        limit: parseInt(limit as string),
+        page: parseInt(page as string),
+      });
 
       res.status(200).json({
         success: true,
         message: "Request Data fetched successfully",
-        data: requestData,
-        pagination: {},
+        data,
+        pagination,
         link: {
           self: "/",
         },

@@ -8,8 +8,14 @@ import {
   NewHistory,
 } from "./history.entities";
 
+type Pagination = {
+  offset: number;
+  limit: number;
+  requestId?: string;
+};
+
 export interface IHistoryRepository {
-  getAll(): Promise<History[]>;
+  getAll(data: Pagination): Promise<History[]>;
   create(data: NewHistory): Promise<History>;
   findById(id: HistoryId): Promise<History | undefined>;
 }
@@ -20,13 +26,22 @@ export class HistoryRepository implements IHistoryRepository {
     private table = HistoryTable
   ) {}
 
-  async getAll(): Promise<History[]> {
-    const user = await this.db
+  async getAll(
+    data: Pagination = { limit: 10, offset: 0 }
+  ): Promise<History[]> {
+    const history = await this.db
       .select()
       .from(this.table)
-      .where(isNull(this.table.deletedAt))
+      .where(
+        and(
+          isNull(this.table.deletedAt),
+          data.requestId ? eq(this.table.request, data.requestId) : undefined
+        )
+      )
+      .limit(data.limit)
+      .offset(data.offset!)
       .execute();
-    return user;
+    return history;
   }
 
   async create(data: NewHistory): Promise<History> {
@@ -43,5 +58,15 @@ export class HistoryRepository implements IHistoryRepository {
       .execute();
     if (!HistoryData) throw new NotFoundError();
     return HistoryData[0]!;
+  }
+
+  async count(requestId?: Pagination["requestId"]): Promise<number> {
+    return await this.db.$count(
+      this.table,
+      and(
+        isNull(this.table.deletedAt),
+        requestId ? eq(this.table.request, requestId) : undefined
+      )
+    );
   }
 }

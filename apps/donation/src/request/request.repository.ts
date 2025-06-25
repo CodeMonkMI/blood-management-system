@@ -10,8 +10,13 @@ import {
   UpdateRequest,
 } from "./request.entities";
 
+type Pagination = {
+  offset: number;
+  limit: number;
+};
+
 export interface IRequestRepository {
-  getAll(): Promise<Request[]>;
+  getAll(data?: Pagination): Promise<Request[]>;
   create(data: NewRequest): Promise<PublicRequest>;
   findById(id: RequestId): Promise<Request | undefined>;
   update(id: RequestId, data: UpdateRequest): Promise<Request | undefined>;
@@ -24,11 +29,15 @@ export class RequestRepository implements IRequestRepository {
     private table = RequestTable
   ) {}
 
-  async getAll(): Promise<Request[]> {
+  async getAll(
+    data: Pagination = { limit: 10, offset: 0 }
+  ): Promise<Request[]> {
     const user = await this.db
       .select()
       .from(this.table)
       .where(isNull(this.table.deletedAt))
+      .limit(data.limit)
+      .offset(data.offset!)
       .execute();
     return user;
   }
@@ -60,5 +69,9 @@ export class RequestRepository implements IRequestRepository {
       .execute();
     if (!requestData) throw new NotFoundError();
     return requestData[0]!;
+  }
+
+  async count(): Promise<number> {
+    return await this.db.$count(this.table, isNull(this.table.deletedAt));
   }
 }

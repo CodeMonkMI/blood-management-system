@@ -1,6 +1,6 @@
 export type PaginationParam = {
-  page: number;
-  limit: number;
+  page?: number;
+  limit?: number;
 };
 
 export type Pagination = {
@@ -8,6 +8,6 @@ export type Pagination = {
   limit: number;
   totalItems: number;
   totalPages: number;
-  next: number;
-  prev: number;
+  next?: number;
+  prev?: number;
 };

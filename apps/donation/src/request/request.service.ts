@@ -1,4 +1,5 @@
-import { NotFoundError } from "@bms/shared/errors";
+import { NotFoundError, ValidationError } from "@bms/shared/errors";
+import { Pagination, PaginationParam } from "@bms/shared/types";
 import {
   NewRequest,
   PublicRequest,
@@ -14,10 +15,39 @@ export class RequestService {
     private readonly requestRepo: RequestRepository = new RequestRepository()
   ) {}
 
-  async getAll(): Promise<ResponseRequest[]> {
-    const requestData = await this.requestRepo.getAll();
+  async getAll(
+    data: PaginationParam
+  ): Promise<{ data: ResponseRequest[]; pagination: Pagination }> {
+    const { page = 1, limit = 10 } = data;
+    const offset = limit * (page - 1);
 
-    return requestData.map(this.toResponseRequest);
+    const totalItems = await this.requestRepo.count();
+    const totalPages = Math.ceil(totalItems / limit);
+
+    if (page > totalPages)
+      throw new ValidationError("Bad request", [
+        {
+          code: "invalid_input",
+          message: "Page is invalid!",
+          path: ["page"],
+        },
+      ]);
+
+    const pagination: Pagination = {
+      limit,
+      totalItems,
+      totalPages,
+      page: data.page!,
+      ...(page < totalPages && { next: page + 1 }),
+      ...(page > 1 && { prev: page - 1 }),
+    };
+
+    const requestData = await this.requestRepo.getAll({ offset, limit });
+
+    return {
+      data: requestData.map(this.toResponseRequest),
+      pagination,
+    };
   }
 
   async getSingle(id: string): Promise<ResponseRequest> {
