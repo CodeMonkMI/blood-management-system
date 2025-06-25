@@ -1,4 +1,4 @@
-import { pgEnum, pgTable, uuid, varchar } from "drizzle-orm/pg-core";
+import { pgEnum, pgTable, timestamp, uuid, varchar } from "drizzle-orm/pg-core";
 
 const id = uuid("id").primaryKey().defaultRandom();
 
@@ -13,7 +13,9 @@ export const BloodType = pgEnum("blood_type", [
   "O_NEGATIVE",
 ]);
 
-export const RequestStatus = pgEnum("request_status", [
+export const Blood = BloodType.enumValues;
+
+export const DonationStatus = pgEnum("request_status", [
   "pending",
   "verified",
   "progress",
@@ -21,6 +23,8 @@ export const RequestStatus = pgEnum("request_status", [
   "hold",
   "completed",
 ]);
+
+export const ReqDonationStatus = DonationStatus.enumValues;
 
 export const RequestTable = pgTable("requests", {
   id,
@@ -30,17 +34,27 @@ export const RequestTable = pgTable("requests", {
   date: varchar("date", { length: 255 }).notNull(),
   blood: BloodType("blood").notNull(),
   description: varchar("description", { length: 255 }),
-  status: RequestStatus("status").default("pending").notNull(),
+  status: DonationStatus("status").default("pending").notNull(),
   metadata: varchar("metadata", { length: 255 }),
   donor: varchar("donor", { length: 255 }),
   details: varchar("details", { length: 255 }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+  deletedAt: timestamp("deleted_at", { withTimezone: true }),
 });
 
 export type Request = typeof RequestTable.$inferSelect;
 export type PublicRequest = Omit<
   Request,
-  "details" | "donor" | "status" | "metadata"
+  | "details"
+  | "donor"
+  | "status"
+  | "metadata"
+  | "createdAt"
+  | "updatedAt"
+  | "deletedAt"
 >;
+export type ResponseRequest = Omit<Request, "deletedAt" | "updatedAt">;
 export type NewRequest = typeof RequestTable.$inferInsert;
-export type UpdateRequest = typeof RequestTable.$inferInsert;
+export type UpdateRequest = Partial<typeof RequestTable.$inferInsert>;
 export type RequestId = string;

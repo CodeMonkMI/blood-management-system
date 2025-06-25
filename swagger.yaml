@@ -1222,29 +1222,6 @@ paths:
           $ref: "#/components/responses/500"
       description: Performs GET operation on /history/{id}
 
-    delete:
-      security:
-        - BearerAuth: []
-      tags:
-        - Donation
-      summary: Delete History
-      parameters:
-        - $ref: "#/components/parameters/idParam"
-      responses:
-        "204":
-          description: No Content
-        400:
-          $ref: "#/components/responses/400"
-        401:
-          $ref: "#/components/responses/401"
-        403:
-          $ref: "#/components/responses/403"
-        404:
-          $ref: "#/components/responses/404"
-        500:
-          $ref: "#/components/responses/500"
-      description: Performs DELETE operation on /history/{id}
-
   /notifications/mail:
     post:
       security:

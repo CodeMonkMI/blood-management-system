@@ -1,6 +1,6 @@
 import { db as database, DatabaseClient } from "@/db";
 import { InternalServerError, NotFoundError } from "@bms/shared/errors";
-import { eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import {
   NewRequest,
   PublicRequest,
@@ -25,7 +25,11 @@ export class RequestRepository implements IRequestRepository {
   ) {}
 
   async getAll(): Promise<Request[]> {
-    const user = await this.db.select().from(this.table).execute();
+    const user = await this.db
+      .select()
+      .from(this.table)
+      .where(isNull(this.table.deletedAt))
+      .execute();
     return user;
   }
 
@@ -52,7 +56,7 @@ export class RequestRepository implements IRequestRepository {
     const requestData = await this.db
       .select()
       .from(this.table)
-      .where(eq(this.table.id, id))
+      .where(and(eq(this.table.id, id), isNull(this.table.deletedAt)))
       .execute();
     if (!requestData) throw new NotFoundError();
     return requestData[0]!;

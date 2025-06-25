@@ -1,4 +1,6 @@
+import { BadRequestError, ValidationError, ZodError } from "@bms/shared/errors";
 import { NextFunction, Request, Response } from "express";
+import { RequestSchema } from "./request.schemas";
 import { RequestService } from "./request.service";
 
 export class RequestController {
@@ -10,6 +12,7 @@ export class RequestController {
     this.create = this.create.bind(this);
     this.update = this.update.bind(this);
     this.remove = this.remove.bind(this);
+    this.verify = this.verify.bind(this);
   }
 
   async all(req: Request, res: Response, next: NextFunction) {
@@ -38,7 +41,6 @@ export class RequestController {
         success: true,
         message: "Request Data fetched successfully",
         data: requestData,
-        pagination: {},
         link: {
           self: "/",
         },
@@ -47,26 +49,93 @@ export class RequestController {
       next(error);
     }
   }
-  create(req: Request, res: Response, next: NextFunction) {
+  async create(req: Request, res: Response, next: NextFunction) {
     try {
+      const parsedData = RequestSchema.create.safeParse(req.body);
+      if (!parsedData.success) {
+        const errors = parsedData.error.errors as ZodError[];
+        throw new ValidationError("Request creation failed", errors);
+      }
+
+      const newRequest = await this.requestService.createPublic(
+        parsedData.data
+      );
+
+      res.status(201).json({
+        success: true,
+        message: "Request added successfully",
+        data: newRequest,
+        link: {
+          self: "/",
+        },
+      });
     } catch (error) {
       next(error);
     }
   }
-  update(req: Request, res: Response, next: NextFunction) {
+  async update(req: Request, res: Response, next: NextFunction) {
     try {
+      if (Object.keys(req.body).length <= 0) {
+        throw new BadRequestError(
+          "You must provide a request body to proceed further!"
+        );
+      }
+
+      const parsedData = RequestSchema.update.safeParse(req.body);
+      if (!parsedData.success) {
+        const errors = parsedData.error.errors as ZodError[];
+        throw new ValidationError("Login failed!", errors);
+      }
+      const updatedRequest = await this.requestService.update(
+        req.params.id!,
+        parsedData.data
+      );
+      res.status(200).json({
+        success: true,
+        message: "Request data updated successfully",
+        data: updatedRequest,
+        link: {
+          self: "/",
+        },
+      });
     } catch (error) {
       next(error);
     }
   }
-  remove(req: Request, res: Response, next: NextFunction) {
+  async remove(req: Request, res: Response, next: NextFunction) {
     try {
+      const id = req.params.id!;
+      await this.requestService.remove(id);
+      res.status(200).json({
+        success: true,
+        message: "Request data deleted successfully",
+        link: {
+          self: "/",
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async verify(req: Request, res: Response, next: NextFunction) {
+    try {
+      const id = req.params.id!;
+      const updatedRequest = await this.requestService.verify(id);
+      res.status(200).json({
+        success: true,
+        message: "Request data verified successfully",
+        data: updatedRequest,
+        link: {
+          self: "/",
+        },
+      });
     } catch (error) {
       next(error);
     }
   }
 }
 
-const { all, create, remove, single, update } = new RequestController();
+const controller = new RequestController();
 
-export { all, create, remove, single, update };
+export const { all, single, create, update, remove, verify } = controller;

@@ -4,6 +4,7 @@ import {
   PublicRequest,
   Request,
   RequestId,
+  ResponseRequest,
   UpdateRequest,
 } from "./request.entities";
 import { RequestRepository } from "./request.repository";
@@ -13,45 +14,78 @@ export class RequestService {
     private readonly requestRepo: RequestRepository = new RequestRepository()
   ) {}
 
-  async getAll(): Promise<Request[]> {
+  async getAll(): Promise<ResponseRequest[]> {
     const requestData = await this.requestRepo.getAll();
 
-    return requestData;
+    return requestData.map(this.toResponseRequest);
   }
 
-  getSingle(id: string): Promise<Request> {
-    const request = this.requestRepo.findById(id);
+  async getSingle(id: string): Promise<ResponseRequest> {
+    const request = await this.requestRepo.findById(id);
 
     if (!request) throw new NotFoundError();
 
-    return request;
+    return this.toResponseRequest(request!);
   }
 
   async createPublic(data: NewRequest): Promise<PublicRequest> {
     const request = await this.requestRepo.create(data);
 
-    const { metadata, details, donor, status, ...rest } = request;
-
-    const returnData: PublicRequest = {
-      ...rest,
-    };
-
-    return returnData;
+    return this.toPublicRequest(request);
   }
 
-  async update(id: RequestId, data: UpdateRequest): Promise<Request> {
+  async update(id: RequestId, data: UpdateRequest): Promise<ResponseRequest> {
     const findRequest = await this.requestRepo.findById(id);
     if (!findRequest) throw new NotFoundError();
 
-    const updatedData = this.update(id, data);
+    const updatedData = await this.requestRepo.update(id, data);
 
-    return updatedData;
+    return this.toResponseRequest(updatedData);
+  }
+  async verify(id: RequestId): Promise<ResponseRequest> {
+    const findRequest = await this.requestRepo.findById(id);
+    if (!findRequest) throw new NotFoundError();
+
+    const updatedData = await this.requestRepo.update(id, {
+      status: "verified",
+    });
+
+    return this.toResponseRequest(updatedData);
   }
 
   async remove(id: RequestId): Promise<void> {
     const findRequest = await this.requestRepo.findById(id);
     if (!findRequest) throw new NotFoundError();
 
-    await this.requestRepo.remove(id);
+    await this.requestRepo.update(id, { deletedAt: new Date() });
+  }
+
+  private toResponseRequest(request: Request): ResponseRequest {
+    return {
+      id: request.id,
+      name: request.name,
+      phone: request.phone,
+      address: request.address,
+      blood: request.blood,
+      description: request.description,
+      date: request.date,
+      status: request.status,
+      details: request.details,
+      donor: request.donor,
+      metadata: request.metadata,
+      createdAt: request.createdAt,
+    };
+  }
+
+  private toPublicRequest(request: Request): PublicRequest {
+    return {
+      id: request.id,
+      name: request.name,
+      phone: request.phone,
+      address: request.address,
+      blood: request.blood,
+      description: request.description,
+      date: request.date,
+    };
   }
 }

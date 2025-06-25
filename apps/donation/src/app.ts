@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import express, { Express, Request, Response } from "express";
 import morgan from "morgan";
+import historyRouter from "./history/history.router";
 import requestRouter from "./request/request.router";
 
 dotenv.config();
@@ -17,6 +18,7 @@ export function createApp() {
   app.use(express.json());
 
   app.use("/request", requestRouter);
+  app.use("/history", historyRouter);
 
   // health route
   app.get("/health", (req: Request, res: Response): any => {
