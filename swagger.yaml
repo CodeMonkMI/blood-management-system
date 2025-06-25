@@ -1083,6 +1083,14 @@ paths:
       parameters:
         - $ref: "#/components/parameters/pageParam"
         - $ref: "#/components/parameters/limitParam"
+        - in: query
+          name: request
+          description: Request Id
+          required: false
+          schema:
+            type: string
+            default: c6f73c4b-f20c-4601-9a57-5ce999233e33
+
       responses:
         200:
           description: Success
@@ -1185,7 +1193,7 @@ paths:
         - BearerAuth: []
       tags:
         - Donation
-      summary: Get All History
+      summary: Get Single History
       parameters:
         - $ref: "#/components/parameters/idParam"
       responses:
@@ -1304,12 +1312,6 @@ components:
         message:
           type: string
           example: Status updated to progress
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
       required:
         - id
         - donor
