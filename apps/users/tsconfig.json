@@ -1,0 +1,24 @@
+{
+    "extends": "@bms/typescript-config/base.json",
+    "compilerOptions": {
+        "target": "ES2022",
+        "outDir": "./dist",
+        "rootDir": "./src",
+        "baseUrl": ".",
+        "paths": {
+            "@/*": [
+                "src/*"
+            ]
+        },
+        "allowSyntheticDefaultImports": true
+    },
+    "include": [
+        "src/**/*.ts",
+        "src/**/*.json",
+        "src/users/.controller.ts"
+    ],
+    "exclude": [
+        "node_modules",
+        "dist"
+    ],
+}

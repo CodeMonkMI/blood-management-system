@@ -1,0 +1,1 @@
+ALTER TABLE "users" ADD COLUMN "phone_no" varchar(255) NOT NULL;
