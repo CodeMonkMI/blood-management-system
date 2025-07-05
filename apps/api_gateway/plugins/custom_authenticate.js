@@ -5,6 +5,10 @@ class CustomAuthenticate {
     this.config = config;
   }
   async access(kong) {
+    const UnauthorizedMessage = {
+      success: false,
+      message: "Unauthorized!",
+    };
     try {
       const headers = await kong.request.getHeaders();
       const token_place = this.config.token_place || "Authorization";
@@ -17,17 +21,27 @@ class CustomAuthenticate {
 
       if (!token) {
         return await kong.response.exit(401, {
-          message: "Unauthorized!",
+          ...UnauthorizedMessage,
+          step: 1,
         });
       }
-
-      const res = await axios.post(this.config.validation_endpoint, {
-        accessToken: token,
-      });
+      kong.log.notice(
+        `validation_endpoint: ${this.config.validation_endpoint}`
+      );
+      const res = await axios.post(
+        this.config.validation_endpoint,
+        {},
+        {
+          headers: {
+            Authorization: token_place,
+          },
+        }
+      );
 
       if (res.status !== 200) {
-        return await kong.response.exit(401, {
-          message: "Unauthorized!",
+        return await kong.response.exit(402, {
+          ...UnauthorizedMessage,
+          step: 2,
         });
       }
       const user = res.data.user;
@@ -39,12 +53,14 @@ class CustomAuthenticate {
 
       return;
     } catch (error) {
-      const message = error.message || "Unauthorized";
+      const message = error.message;
 
       kong.log.notice(` >>> ${JSON.stringify(error)} <<< `);
 
-      return await kong.response.exit(401, {
-        message: "Unauthorized!",
+      return await kong.response.exit(403, {
+        ...UnauthorizedMessage,
+        ...(message && { message }),
+        step: 3,
       });
     }
   }

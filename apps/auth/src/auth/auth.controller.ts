@@ -15,6 +15,7 @@ export class AuthController {
     this.me = this.me.bind(this);
     this.register = this.register.bind(this);
     this.authorize = this.authorize.bind(this);
+    this.verifyToken = this.verifyToken.bind(this);
   }
 
   async login(req: Request, res: Response, next: NextFunction) {
@@ -58,6 +59,17 @@ export class AuthController {
         links: {
           self: "/auth/me",
         },
+      });
+      return;
+    } catch (error) {
+      next(error);
+    }
+  }
+  async verifyToken(_req: Request, res: Response, next: NextFunction) {
+    try {
+      res.status(200).json({
+        success: true,
+        message: "Token verified successfully",
       });
       return;
     } catch (error) {
@@ -121,6 +133,6 @@ export class AuthController {
   }
 }
 
-const { login, me, register, authorize } = new AuthController();
+const { login, me, register, authorize, verifyToken } = new AuthController();
 
-export { authorize, login, me, register };
+export { authorize, login, me, register, verifyToken };

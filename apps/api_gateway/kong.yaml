@@ -2,7 +2,7 @@ _format_version: "3.0"
 _transform: true
 
 services:
-  - name: auth-service
+  - name: auth-valid-service
     protocol: http
     host: host.docker.internal
     port: 5001
@@ -123,12 +123,11 @@ plugins:
   #     max_age: 3600
   #     preflight_continue: false
 
-  # - name: response-transformer
-  #   service: donation-history-service
-  #   config:
-  #     add:
-  #       headers:
-  #         - X-Powered-By:Kong
-  #     remove:
-  #       headers:
-  #         - Server
+  - name: response-transformer
+    config:
+      add:
+        headers:
+          - X-Powered-By:Kong
+      remove:
+        headers:
+          - Server
