@@ -13,7 +13,7 @@ info:
     name: Monirul Islam
     url: http://github.com/codemonkmi
 servers:
-  - url: http://localhost:4000/api/v1
+  - url: http://localhost:8000/api/v1
     description: dev server
 tags:
   - name: Auth

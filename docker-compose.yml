@@ -3,6 +3,7 @@ volumes:
   donation_postgres:
   users_postgres:
   pgadmin:
+  kong_db_data: {} # Named volume to persist Postgres data across container restarts
 
 networks:
   app_network:
@@ -15,7 +16,13 @@ networks:
     driver: bridge
   pg_network:
     driver: bridge
+  kong_network:
+    driver: bridge
+  kong-ee-net: # Custom bridge network for isolated Kong and Postgres communication
+    driver: bridge
+
 services:
+  # ALL DATABASES
   auth_db:
     container_name: auth_database
     image: postgres:13
@@ -93,3 +100,51 @@ services:
       - pgadmin:/var/lib/pgadmin
     networks:
       - pg_network
+
+  # API GATEWAY
+
+  kong:
+    build:
+      context: ./apps/api_gateway
+      dockerfile: Dockerfile
+    container_name: kong-gateway
+    restart: unless-stopped
+    networks:
+      # kong-net:
+      # ipv4_address: 172.1.1.40
+      - kong_network
+    environment:
+      KONG_DATABASE: "off"
+      KONG_ADMIN_LISTEN: 0.0.0.0:8001, 0.0.0.0:8444 ssl
+      KONG_DECLARATIVE_CONFIG: "/usr/local/kong/declarative/kong.yml"
+      KONG_PLUGINSERVER_NAMES: js
+      KONG_PLUGINSERVER_JS_SOCKET: /usr/local/kong/js_pluginserver.sock
+      KONG_PLUGINSERVER_JS_START_CMD: /usr/local/bin/kong-js-pluginserver -v --plugins-directory /usr/local/kong/js-plugins
+      KONG_PLUGINSERVER_JS_QUERY_CMD: /usr/local/bin/kong-js-pluginserver --plugins-directory /usr/local/kong/js-plugins --dump-all-plugins
+      KONG_PLUGINS: bundled,custom_authenticate
+    healthcheck:
+      test: ["CMD", "kong", "health"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+    ports:
+      - "8000:8000"
+      - "8001:8001"
+      - "8002:8002"
+      - "8443:8443"
+      - "8444:8444"
+    volumes:
+      - ./apps/api_gateway/kong.yaml:/usr/local/kong/declarative/kong.yml:ro
+
+  kong-watcher:
+    build:
+      context: ./apps/api_gateway/watcher
+    container_name: kong-watcher
+    depends_on:
+      - kong
+    volumes:
+      - ./apps/api_gateway/kong.yaml:/watched/kong.yaml:ro
+      - /var/run/docker.sock:/var/run/docker.sock # To allow calling docker exec
+    environment:
+      - KONG_CONTAINER_NAME=kong-gateway
+    restart: unless-stopped
